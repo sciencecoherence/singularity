@@ -10,12 +10,8 @@
     (window.vaq = window.vaq || []).push(arguments);
   };
 
-  // Track initial page view
-  if (typeof window.va === 'function') {
-    window.va('pageview');
-  }
-
   // Optional: Track custom events when the app initializes
   // This can be extended to track specific user interactions
-  console.log('[Analytics] Vercel Web Analytics initialized');
+  // Note: Pageviews are automatically tracked by Vercel Analytics when the actual
+  // script loads, so no manual pageview call is needed here
 })();
