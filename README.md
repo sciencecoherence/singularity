@@ -1,60 +1,41 @@
-# Singularity Monitor — web edition
+# Singularity Monitor
 
-The planet, the Sun, war, the economy and society, live, in a browser. This is
-the website of the Singularity Monitor desktop app: the same pages and the same
-code, served by Vercel.
-
-## How it is built
+The planet, the Sun, war, the economy and society, live: a desktop app for
+Windows, and the same pages as a website.
 
 ```
-public/          the website: generated from the desktop app's source, do not edit here
-api/feed.js      the one server-side function: an allowlisted, cached pass-through
-scripts/sync.mjs builds public/ from temporal-live/source
-scripts/dev.mjs  a local stand-in for Vercel (serves public/ and runs api/feed.js)
-vercel.json      no framework, no build: public/ is served as is
+app/    the desktop app (Electron): source/, Build Runtime.cmd, CHANGELOG.md, READ ME.md
+web/    the website (Vercel): api/feed.js, vercel.json, scripts/
 ```
 
-There is no framework and no build step. The desktop app's source
-(`temporal-live/source`) is the one implementation; `scripts/sync.mjs` copies
-it into `public/`, leaving out the Electron-only files (`main.js`,
-`preload.js`, `article.js`, `spotify.js`), and tells the page where its proxy
-is (`<meta name="sm-proxy" content="/api/feed">`).
+There is one implementation. `app/source` holds every page and stream; the
+website is built from it at each deploy (`web/scripts/sync.mjs`), leaving out
+the Electron-only files and adding one server function, `web/api/feed.js`, for
+the sources a browser cannot read directly. A change to the app reaches the
+website on the next push.
 
-**Sources with cross-origin headers** (USGS, GDACS, NOAA SWPC, Wikipedia, the
-World Bank, Launch Library, Crossref…) are read by each visitor's browser
-directly.
+## The desktop app
 
-**Sources without** (Google News, the BIS, the IMF, NASA GISTEMP, NSIDC,
-Yahoo Finance, GDELT, the EIA, CelesTrak…) go through `/api/feed`. Each answer
-is cached by Vercel's CDN for a time set per source — a quarter hour for news,
-two minutes for market quotes, six hours for the IMF and the BIS — and served
-stale while it refreshes. However many people have the page open, each source
-is asked at most once per window. No cron jobs are needed, so it runs on the
-Hobby plan.
+Read `app/READ ME.md`. In short: `app/Build Runtime.cmd` builds it on the
+Electron already installed for Temporal Matrix and opens it. The build
+(`app/runtime/`) is not in git.
 
-## Updating the website after a change to the app
+## The website
 
-```
-cd singularity
-node scripts/sync.mjs ../temporal-live/source
-git add -A && git commit -m "Sync with temporal-live <version>" && git push
-```
+Vercel project settings: Root Directory `web`, with "Include files outside the
+Root Directory" on (the build reads `app/source`). Everything else is in
+`web/vercel.json`: no framework, build command `node scripts/sync.mjs
+../app/source`, output `public`. A push that changes neither `app/source` nor
+`web/` does not deploy. See `web/README.md`.
 
-Vercel deploys every push to `main`.
-
-## Running it locally
+To run the website locally:
 
 ```
-node scripts/dev.mjs        # http://localhost:3000
+cd web
+npm run dev          # http://localhost:3000
 ```
 
-## What the web edition does not do
+## Versions
 
-The desktop app's Windows notifications become browser notifications (the
-browser asks once). The in-page article reader, Spotify sync, the screensaver
-and the full CelesTrak satellite catalogue are desktop-only. Webcams need a
-free Windy key in Settings, as in the app.
-
-## Licences
-
-Code: the same as the desktop app. Data credits: `public/lib/LICENSES.txt`.
+One version number for both, in `app/source/package.json`, recorded in
+`app/CHANGELOG.md`. The website shows it in its status bar, marked "web".

@@ -4,9 +4,11 @@
   "private": true,
   "description": "Singularity Monitor, web edition: the planet, the Sun, war, economy and society, live.",
   "type": "module",
-  "engines": { "node": "22.x" },
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
-    "sync": "node scripts/sync.mjs ../temporal-live/source",
-    "dev": "node scripts/dev.mjs"
+    "build": "node scripts/sync.mjs ../app/source",
+    "dev": "node scripts/sync.mjs ../app/source && node scripts/dev.mjs"
   }
 }

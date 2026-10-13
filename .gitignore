@@ -1,4 +1,15 @@
+# Dependencies and local tooling
 node_modules/
 .vercel/
 .DS_Store
 Thumbs.db
+
+# The desktop app's Electron build: rebuilt by app/Build Runtime.cmd, hundreds of MB
+app/runtime/
+# An older standalone project kept beside the app, with its own Electron build
+app/protocol-monitor/
+# Earlier versions of files, kept on disk as history
+app/archive/
+
+# The website is built from app/source at deploy time (web/scripts/sync.mjs)
+web/public/
