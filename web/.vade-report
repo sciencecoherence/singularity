@@ -1,0 +1,55 @@
+# Vercel Web Analytics Configuration
+
+Successfully installed and configured Vercel Web Analytics for this project following the latest official documentation from https://vercel.com/docs/analytics/quickstart.
+
+## What Was Done
+
+### 1. Dependencies Installed
+- Installed `@vercel/analytics@2.0.1` using pnpm
+- The package was already listed in package.json but node_modules needed to be installed
+
+### 2. Content Security Policy Updated
+Modified `app/source/index.html` to add Vercel Analytics domains to CSP:
+- Added `https://va.vercel-scripts.com` to `script-src` directive
+  - This allows Vercel to load the analytics script in production
+- `https://vitals.vercel-insights.com` was already present in `connect-src`
+  - This allows the analytics data to be sent to Vercel's servers
+
+### 3. Analytics Script Configured
+Updated `app/source/analytics.js` to use the recommended window.va stub pattern:
+- Follows the official Vercel documentation for vanilla JavaScript/HTML projects
+- The stub initializes `window.va` and queues events until the actual script loads
+- Removed manual pageview tracking since Vercel Analytics automatically tracks pageviews
+- When deployed to Vercel, their infrastructure will inject the actual analytics script
+
+### 4. Build Verified
+- Ran `npm run build` successfully
+- Confirmed analytics.js is included in the generated HTML
+- Confirmed CSP changes were properly propagated to the output
+
+## Implementation Details
+
+This project uses a vanilla JavaScript/HTML approach without a bundler. The implementation follows Vercel's recommended pattern for such projects:
+
+1. **window.va stub pattern**: The analytics.js file creates a stub that queues analytics calls until the real script loads
+2. **Automatic injection**: When deployed on Vercel, the platform automatically injects the production analytics script
+3. **CSP compliance**: Updated the Content Security Policy to allow the analytics script and data transmission
+
+## Files Modified
+
+- `app/source/index.html` - Updated CSP to allow Vercel Analytics domains
+- `app/source/analytics.js` - Refined the analytics initialization code to match latest docs
+
+## Verification
+
+The analytics will work automatically once deployed to Vercel. To verify:
+1. Deploy the site to Vercel
+2. Visit the deployed site
+3. Check browser DevTools Network tab for requests to `/_vercel/insights/*` or similar paths
+4. View analytics data in the Vercel dashboard under the Analytics tab
+
+## Notes
+
+- The analytics script is already included at the end of index.html (line 520)
+- Analytics will only work on the Vercel-deployed version; local development won't send analytics data
+- The window.va stub ensures no errors occur during local development when the actual script isn't present
