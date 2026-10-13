@@ -81,6 +81,14 @@ npm run dev                 # builds public/, then http://localhost:3000
                             # (the shared record is kept in web/.memory.json)
 ```
 
+## Analytics
+
+Vercel Web Analytics counts page views. The build adds Vercel's script
+(`/_vercel/insights/script.js`, served by Vercel from this site) to the
+website's page; `app/source/analytics.js` is the queue it reads. Analytics must
+be switched on for the project in the Vercel dashboard (Analytics tab). The
+desktop app loads neither script's source and sends nothing.
+
 ## What the web edition does not do
 
 The desktop app's Windows notifications become browser notifications (the

@@ -40,6 +40,16 @@ const version = JSON.parse(readFileSync(join(src, 'package.json'), 'utf8')).vers
 let html = readFileSync(join(out, 'index.html'), 'utf8');
 const meta = `<meta name="sm-proxy" content="/api/feed">\n<meta name="sm-memory" content="/api/memory">\n<meta name="sm-version" content="${version} web">\n`;
 if (!html.includes('name="sm-proxy"')) html = html.replace(/(<meta charset="[^"]*">\s*)/i, `$1${meta}`);
+// Vercel Web Analytics: page views, counted by Vercel's own script, served
+// from this site (/_vercel/insights/script.js, so the CSP's 'self' covers it).
+// The website only: the desktop app loads app/source directly and never sees
+// this tag; analytics.js there is only the queue the script reads.
+if (!html.includes('/_vercel/insights/script.js')) {
+  const tag = '<script defer src="/_vercel/insights/script.js"></script>';
+  html = html.includes('<script src="analytics.js"></script>')
+    ? html.replace('<script src="analytics.js"></script>', '<script src="analytics.js"></script>' + tag)
+    : html.replace('</body>', tag + '\n</body>');
+}
 // Webcam thumbnails come from the webcam providers' own image hosts.
 html = html.replace(/img-src 'self' data:/, "img-src 'self' data: https:");
 writeFileSync(join(out, 'index.html'), html);

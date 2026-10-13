@@ -12,6 +12,12 @@ Versions follow [Semantic Versioning](https://semver.org): MAJOR.MINOR.PATCH.
   layer, a data source, an alert.
 - **PATCH** — a fix or an adjustment to what exists: layout, wording, a bug.
 
+## 2.13.2 · 2026-10-13
+- Fixed: Vercel Web Analytics on the website counts visits. The analytics
+  pull requests added only the queue (`analytics.js`), and nothing loaded
+  Vercel's script; the website build now adds it
+  (`/_vercel/insights/script.js`). The desktop app sends nothing.
+
 ## 2.13.1 · 2026-10-13
 - Changed: the shared record's key loads by itself. The app reads it from
   `memory-key.txt` in the app folder (beside Build Runtime.cmd; not in git),
