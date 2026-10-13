@@ -12,6 +12,14 @@ Versions follow [Semantic Versioning](https://semver.org): MAJOR.MINOR.PATCH.
   layer, a data source, an alert.
 - **PATCH** — a fix or an adjustment to what exists: layout, wording, a bug.
 
+## 2.13.1 · 2026-10-13
+- Changed: the shared record's key loads by itself. The app reads it from
+  `memory-key.txt` in the app folder (beside Build Runtime.cmd; not in git),
+  or from its data folder, or from SM_MEMORY_KEY; it is never typed into the
+  page and never handed to it. Settings → Shared record now says whether the
+  app is adding to the record or only reading, and where its key came from.
+  The incidents are sent again only when the app's own list has changed.
+
 ## 2.13.0 · 2026-10-13
 - Added: a shared record of AI incidents, kept by the website
   (`web/api/memory.js`). A feed holds only its newest stories — Al Jazeera's

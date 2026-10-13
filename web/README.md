@@ -46,8 +46,9 @@ so the desktop app, open for weeks, knew more than a website opened today.
   reads the AI Incident Database and the three newsrooms itself, with the
   page's own rules (`lib/incidents.js`), so every visit keeps it current.
 - **POST** with `Authorization: Bearer <MEMORY_KEY>` adds incidents. The
-  desktop app, given the key in Settings, sends everything it has read.
-  Without the key nothing can be written.
+  desktop app sends everything it has read when it finds the key in
+  `app/memory-key.txt` (beside Build Runtime.cmd; not in git). Without the
+  key nothing can be written, and the app only reads.
 
 Every copy, desktop or web, reads the record every ten minutes and merges it.
 
@@ -55,9 +56,12 @@ Setup, once, in the Vercel dashboard:
 
 1. Storage → Create Database → **Upstash for Redis** (free plan), connected to
    this project. It adds `KV_REST_API_URL` and `KV_REST_API_TOKEN`.
-2. Settings → Environment Variables → `MEMORY_KEY`: any long random string
-   (16 characters or more), for Production. Redeploy.
-3. In the desktop app: Settings → Shared record key → the same string.
+2. Settings → Environment Variables → `MEMORY_KEY`: the contents of
+   `app/memory-key.txt` (16 characters or more), for Production. Redeploy.
+3. Put the same string in `app/memory-key.txt` on the computer that runs the
+   desktop app. The app picks it up on its next reading (within ten
+   minutes); Settings → Shared record says whether it is adding or only
+   reading.
 
 Until step 1 is done, `/api/memory` answers 503 and the "Shared record"
 stream shows as unreachable; everything else works as before.

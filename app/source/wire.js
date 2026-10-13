@@ -523,18 +523,19 @@ const Wire = (() => {
      feeds whenever the site is visited, and the desktop app, given the key in
      Settings, adds everything it has read. Every copy reads that record and
      merges it into its own. Without the key the desktop app still reads it. */
-  const MEMORY_KEY = 'temporal-live:memory-key';
   const memoryMeta = typeof document !== 'undefined' && document.querySelector('meta[name="sm-memory"]');
   const hasMemory = !!((typeof window !== 'undefined' && window.desktop) || memoryMeta);
+  let lastSent = '';          // the incidents last added, so an unchanged list is not sent again
   async function readShared() {
     let data;
     if (window.desktop) {
       if (!window.desktop.memory) throw new Error(Net.STALE_RUNTIME);
-      let key = '';
-      try { key = localStorage.getItem(MEMORY_KEY) || ''; } catch { /* no key */ }
-      const own = key ? state.incidents.filter(e => e.source === 'aiid' || e.source === 'newsroom') : null;
-      const r = await window.desktop.memory(own, key);
-      if (r.error) throw new Error(r.error);
+      const own = state.incidents.filter(e => e.source === 'aiid' || e.source === 'newsroom');
+      const sig = own.map(e => e.id).join('|');
+      const r = await window.desktop.memory(sig === lastSent ? null : own);
+      if (r.error) { memoryNote(r.keyFrom, r.error); throw new Error(r.error); }
+      if (r.sent) lastSent = sig;
+      memoryNote(r.keyFrom);
       data = r.data;
     } else {
       if (Net.paused) throw new Error(Net.PAUSED_ERR);
@@ -549,28 +550,18 @@ const Wire = (() => {
     const list = (data && Array.isArray(data.incidents) ? data.incidents : []).map(e => Incidents.clean(e)).filter(Boolean);
     accumulate('incidents', 'shared', list, Incidents.KEEP_MS);
   }
-  // The key field in Settings (desktop only: the website only reads).
-  function wireKeyField() {
-    const input = document.getElementById('memory-key'), row = document.getElementById('memory-key-row');
-    if (!input || !row) return;
-    if (!window.desktop) { row.hidden = true; return; }
-    try { input.value = localStorage.getItem(MEMORY_KEY) || ''; } catch { /* none */ }
-    input.addEventListener('change', () => {
-      const v = input.value.trim();
-      try { v ? localStorage.setItem(MEMORY_KEY, v) : localStorage.removeItem(MEMORY_KEY); } catch { /* storage refused */ }
-      const st = document.getElementById('memory-key-status');
-      if (st) st.textContent = v ? 'Saved. Sending what this app has read…' : 'Removed. The app still reads the shared record.';
-      const s = STREAMS.find(x => x.key === 'shared');
-      if (s) run(s).then(() => {
-        const h = state.sources.shared;
-        if (st && v) st.textContent = h.status === 'live' && h.at > Date.now() - 60000
-          ? 'Saved. This app’s incidents are in the shared record.' : `Saved, but the record answered: ${h.note || 'no answer'}`;
-      });
-    });
+  // What Settings says about it (desktop only: the website only reads).
+  function memoryNote(keyFrom, error) {
+    const el = typeof document !== 'undefined' && document.getElementById('memory-status');
+    if (!el) return;
+    const where = keyFrom ? (keyFrom === 'SM_MEMORY_KEY' ? 'SM_MEMORY_KEY' : keyFrom.split(/[\\/]/).slice(-2).join('\\')) : '';
+    el.textContent = error
+      ? `Not reached: ${error}${/key/i.test(error) && keyFrom ? ` — check that ${where} matches MEMORY_KEY on Vercel` : ''}`
+      : keyFrom ? `Adding what this app reads · key from ${where}` : 'Reading only · no memory-key.txt in the app folder';
   }
-  if (typeof document !== 'undefined') {
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wireKeyField);
-    else wireKeyField();
+  if (typeof document !== 'undefined' && typeof window !== 'undefined' && !window.desktop) {
+    const hide = () => { const row = document.getElementById('memory-row'); if (row) row.hidden = true; };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', hide); else hide();
   }
 
   /* ── Scheduler ─────────────────────────────────────────────────────── */

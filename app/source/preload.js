@@ -10,8 +10,9 @@ contextBridge.exposeInMainWorld('desktop',{
   // holds the allowlist of sources.
   feed:url=>ipcRenderer.invoke('matrix:feed',String(url)),
   feedText:(url,head)=>ipcRenderer.invoke('matrix:feed-text',String(url),Number(head)||0),
-  // The website's shared record of AI incidents: read it, or add to it with the key.
-  memory:(items,key)=>ipcRenderer.invoke('matrix:memory',Array.isArray(items)?items:null,String(key||'')),
+  // The website's shared record of AI incidents: read it, and add to it when
+  // the main process holds the key (memory-key.txt).
+  memory:items=>ipcRenderer.invoke('matrix:memory',Array.isArray(items)?items:null),
   // Alerts: a Windows notification and a phone push, made once by the main
   // process.
   alert:payload=>ipcRenderer.invoke('matrix:alert',payload),

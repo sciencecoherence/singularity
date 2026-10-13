@@ -132,21 +132,32 @@ function fetchFeed(url,asText,head=0){
 ipcMain.handle('matrix:feed',(e,url)=>trusted(e)?fetchFeed(String(url),false):{error:'untrusted sender'});
 ipcMain.handle('matrix:feed-text',(e,url,head)=>trusted(e)?fetchFeed(String(url),true,head):{error:'untrusted sender'});
 // The website's shared record of AI incidents (web/api/memory.js). The page
-// can reach this one address only. With the key from Settings the app adds
-// what it has read; without it, it reads the record.
+// can reach this one address only. The app adds what it has read when it has
+// the record's key, and otherwise only reads. The key is loaded from a file,
+// never typed and never handed to the page: memory-key.txt in the app folder
+// (beside Build Runtime.cmd), or in the app's data folder; SM_MEMORY_KEY in
+// the environment overrides both. It must match MEMORY_KEY on Vercel.
 const MEMORY_URL=process.env.SM_MEMORY_URL||'https://singularity-web-chi.vercel.app/api/memory';
-ipcMain.handle('matrix:memory',async(e,items,key)=>{
+function memoryKey(){
+  if(process.env.SM_MEMORY_KEY&&process.env.SM_MEMORY_KEY.trim().length>=16)return{key:process.env.SM_MEMORY_KEY.trim(),from:'SM_MEMORY_KEY'};
+  for(const p of [path.join(__dirname,'..','..','..','memory-key.txt'),path.join(__dirname,'..','memory-key.txt'),path.join(app.getPath('userData'),'memory-key.txt')]){
+    try{const k=fs.readFileSync(p,'utf8').trim();if(k.length>=16)return{key:k,from:p};}catch{/* not there */}
+  }
+  return{key:'',from:''};
+}
+ipcMain.handle('matrix:memory',async(e,items)=>{
   if(!trusted(e))return{error:'untrusted sender'};
+  const {key,from}=memoryKey();
   try{
-    const post=Array.isArray(items)&&typeof key==='string'&&key.length>0;
+    const post=Array.isArray(items)&&key.length>0;
     const res=await net.fetch(MEMORY_URL,post
       ?{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({incidents:items.slice(0,500)})}
       :{method:'GET',headers:{'Accept':'application/json'}});
     const text=await res.text();
     let data=null;try{data=JSON.parse(text);}catch{/* not JSON */}
-    if(!res.ok)return{error:(data&&data.error)||('HTTP '+res.status)};
-    return{data};
-  }catch(err){return{error:String((err&&err.message)||err).slice(0,80)};}
+    if(!res.ok)return{error:(data&&data.error)||('HTTP '+res.status),keyFrom:from};
+    return{data,sent:post,keyFrom:from};
+  }catch(err){return{error:String((err&&err.message)||err).slice(0,80),keyFrom:from};}
 });
 
 /* ── Alerts ────────────────────────────────────────────────────────────────

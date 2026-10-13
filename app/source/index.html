@@ -471,7 +471,7 @@
   <label class="check"><input id="marks-toggle" type="checkbox" checked> Mark recent earthquakes on the Matrix clock ring</label>
   <label class="check"><input id="streams-toggle" type="checkbox" checked> Read the live planetary streams</label>
   <label>Windy webcams key <span>Optional. With a free key from api.windy.com/keys, the globe lists the public webcams near any point. It stays in this browser and is sent only to Windy.</span><input id="windy-key" type="text" maxlength="80" autocomplete="off" spellcheck="false" placeholder="Not set"><span class="topic-status" id="windy-key-status" role="status"></span></label>
-  <label id="memory-key-row">Shared record key <span>Optional. With the key set on the website's server (MEMORY_KEY), this app adds the AI incidents it reads to the website's shared record, so the site keeps what passed through a feed while no one had it open. Without it the app still reads the record. It stays on this computer and is sent only to the website.</span><input id="memory-key" type="password" maxlength="200" autocomplete="off" spellcheck="false" placeholder="Not set"><span class="topic-status" id="memory-key-status" role="status"></span></label>
+  <div class="memory-row" id="memory-row"><span class="memory-title">Shared record</span> <span class="memory-help">The website's record of AI incidents, which every copy reads. This app adds what it reads when <code>memory-key.txt</code> is in the app folder, holding the same key as MEMORY_KEY on Vercel.</span> <span class="topic-status" id="memory-status" role="status">Checked every ten minutes.</span></div>
   <fieldset class="alert-settings" id="alert-settings">
     <legend>Alerts <span>saved as you change them</span></legend>
     <div class="alert-grid">

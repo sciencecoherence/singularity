@@ -16,3 +16,6 @@ web/public/
 
 # The local stand-in for the shared record (web/scripts/dev.mjs)
 web/.memory.json
+
+# The shared record key, read by the desktop app (main.js); never committed
+app/memory-key.txt
