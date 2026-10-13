@@ -10,5 +10,8 @@
   "scripts": {
     "build": "node scripts/sync.mjs ../app/source",
     "dev": "node scripts/sync.mjs ../app/source && node scripts/dev.mjs"
+  },
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1"
   }
 }
