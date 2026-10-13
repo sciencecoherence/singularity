@@ -1,0 +1,12 @@
+{
+  "name": "singularity",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Singularity Monitor, web edition: the planet, the Sun, war, economy and society, live.",
+  "type": "module",
+  "engines": { "node": "22.x" },
+  "scripts": {
+    "sync": "node scripts/sync.mjs ../temporal-live/source",
+    "dev": "node scripts/dev.mjs"
+  }
+}

@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="sm-proxy" content="/api/feed">
+<meta name="sm-version" content="2.12.0 web">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: https://api.helioviewer.org https://services.swpc.noaa.gov; connect-src 'self' https://earthquake.usgs.gov https://www.gdacs.org https://eonet.gsfc.nasa.gov https://services.swpc.noaa.gov https://api.nasa.gov https://gml.noaa.gov https://ll.thespacedevs.com https://en.wikipedia.org https://www.nasa.gov https://www.star.nesdis.noaa.gov https://api.windy.com https://api.crossref.org https://www.ebi.ac.uk https://api.worldbank.org; frame-src https://open.spotify.com">
+<title>Singularity Monitor</title><link rel="icon" href="data:,">
+<script src="theme.js"></script>
+<link rel="stylesheet" href="style.css"></head>
+<body>
+<div class="app" id="app">
+
+  <header class="topbar">
+    <div class="brand"><svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20M2 12h20M4.9 4.9l14.2 14.2M19.1 4.9L4.9 19.1"/></svg><b>SINGULARITY MONITOR</b></div>
+    <div class="crumbs"><span class="crumb-root">Operations</span><span class="crumb-sep">/</span><span id="page-title">Overview</span></div>
+    <div class="mx" title="Matrix time · date · dilation"><span class="mx-lbl">MATRIX</span><b id="mx-time">--:--:--</b><span id="mx-date">—</span><span class="mx-v" id="mx-v">—</span></div>
+    <div class="status" title="Live streams"><i id="status-lamp"></i><span id="run-status">OPENING STREAMS</span></div>
+    <div class="tools">
+      <button id="alerts-button" class="tool" title="Alerts (A)" aria-label="Alerts"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 11.5V7.2a4 4 0 0 1 8 0v4.3l1.2 1.3H2.8z"/><path d="M6.6 14.2a1.5 1.5 0 0 0 2.8 0"/></svg><b id="alerts-count"></b></button>
+      <button id="music-button" class="tool" title="Play the playlist" aria-label="Play the playlist" aria-expanded="false" aria-controls="music-dock"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6.2 11.6V3.4l6.6-1.4v8.2"/><circle cx="4.7" cy="11.7" r="1.6" class="fill"/><circle cx="11.3" cy="10.3" r="1.6" class="fill"/></svg></button>
+      <button id="theme-button" class="tool" title="Light or dark theme (T)" aria-label="Switch between light and dark theme"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M8 2.5v11a5.5 5.5 0 0 0 0-11z" class="fill"/></svg></button>
+      <button id="fullscreen-button" class="tool" title="Fullscreen (Enter)" aria-label="Fullscreen"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10"/></svg></button>
+      <button id="settings-button" class="tool" title="Settings" aria-label="Settings"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4.5h12M2 11.5h12"/><circle cx="6" cy="4.5" r="1.9" class="fill"/><circle cx="10.5" cy="11.5" r="1.9" class="fill"/></svg></button>
+    </div>
+  </header>
+  <div id="alert-banner" class="alert-banner" role="alert" hidden></div>
+
+  <nav class="sidebar tabs" role="tablist" aria-label="Sections">
+    <div class="nav-group">OPERATIONS</div>
+    <button class="tab nav-item" data-view="field" role="tab" aria-selected="false" title="Overview (1)"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 2.5h4.5v4.5H2.5zM9 2.5h4.5v4.5H9zM2.5 9h4.5v4.5H2.5zM9 9h4.5v4.5H9z"/></svg><span>Overview</span></button>
+    <button class="tab nav-item" data-view="globe" role="tab" aria-selected="false" title="Globe (2)"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.8"/><path d="M2.2 8h11.6M8 2.2c-2.4 2.8-2.4 8.8 0 11.6M8 2.2c2.4 2.8 2.4 8.8 0 11.6"/></svg><span>Globe</span></button>
+    <button class="tab nav-item" data-view="seismic" role="tab" aria-selected="false" title="Seismic (3)"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1 8.5h2.6l1.4-3.6 2.2 7.2 2.1-9 1.9 5.4h3.8"/></svg><span>Seismic</span><b class="nav-count" id="tab-count-seismic"></b></button>
+    <button class="tab nav-item" data-view="disasters" role="tab" aria-selected="false" title="Hazards (4)"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.2l6.3 11H1.7z"/><path d="M8 6.4v3.3"/><circle cx="8" cy="11.4" r=".75" class="fill"/></svg><span>Hazards</span><b class="nav-count" id="tab-count-disasters"></b></button>
+    <button class="tab nav-item" data-view="solar" role="tab" aria-selected="false" title="Solar (5)"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="2.8"/><path d="M8 1.3v1.8M8 12.9v1.8M1.3 8h1.8M12.9 8h1.8M3.3 3.3l1.3 1.3M11.4 11.4l1.3 1.3M3.3 12.7l1.3-1.3M11.4 4.6l1.3-1.3"/></svg><span>Solar</span></button>
+    <button class="tab nav-item" data-view="orbital" role="tab" aria-selected="false" title="Orbital (6)"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="2.6"/><ellipse cx="8" cy="8" rx="6.8" ry="2.6" transform="rotate(-25 8 8)"/><circle cx="12.9" cy="4.35" r=".95" class="fill"/></svg><span>Orbital</span></button>
+    <button class="tab nav-item" data-view="energy" role="tab" aria-selected="false" title="Energy (E)"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 14V7.5l3-2v2.2l3-2v2.2l3-2V14z"/><path d="M11 5.9V2h2.2v12"/><path d="M4.5 10.5h1.5M8 10.5h1.5"/></svg><span>Energy</span><b class="nav-count" id="tab-count-energy"></b></button>
+    <div class="nav-group">INTELLIGENCE</div>
+    <button class="tab nav-item" data-view="vitals" role="tab" aria-selected="false" title="Vitals (7)"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 9h3l1.5-4 2.5 7 1.8-4.5 1.2 1.5h3"/></svg><span>Vitals</span></button>
+    <button class="tab nav-item" data-view="ai" role="tab" aria-selected="false" title="AI (8)"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="4" y="4" width="8" height="8"/><path d="M6.5 6.5h3v3h-3zM6 1.5V4M10 1.5V4M6 12v2.5M10 12v2.5M1.5 6H4M1.5 10H4M12 6h2.5M12 10h2.5"/></svg><span>AI</span><b class="nav-count" id="tab-count-ai"></b></button>
+    <button class="tab nav-item" data-view="world" role="tab" aria-selected="false" title="World (9)"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 3.5h12M2 8h12M2 12.5h8"/></svg><span>World</span><b class="nav-count" id="tab-count-world"></b></button>
+    <button class="tab nav-item" data-view="war" role="tab" aria-selected="false" title="War observatory (R)"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.6"/><circle cx="8" cy="8" r="2"/><path d="M8 0.8v3.4M8 11.8v3.4M0.8 8h3.4M11.8 8h3.4"/></svg><span>War</span><b class="nav-count" id="tab-count-war"></b></button>
+    <button class="tab nav-item" data-view="society" role="tab" aria-selected="false" title="Society (S)"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="5" cy="5" r="2.2"/><circle cx="11" cy="5" r="2.2"/><path d="M1.5 13.5c0-2.4 1.6-4 3.5-4s3.5 1.6 3.5 4M7.5 13.5c0-2.4 1.6-4 3.5-4s3.5 1.6 3.5 4"/></svg><span>Society</span><b class="nav-count" id="tab-count-society"></b></button>
+    <button class="tab nav-item" data-view="economy" role="tab" aria-selected="false" title="Economy (C)"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 14.5h13"/><path d="M3 12V8.5M6.3 12V5.5M9.6 12V7M12.9 12V3"/></svg><span>Economy</span><b class="nav-count" id="tab-count-economy"></b></button>
+    <button class="tab nav-item" data-view="discovery" role="tab" aria-selected="false" title="Discovery (D)"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.2"/><path d="M10.2 10.2l3.8 3.8"/></svg><span>Discovery</span><b class="nav-count" id="tab-count-discovery"></b></button>
+    <div class="nav-group">TIME</div>
+    <button class="tab nav-item" data-view="matrix" role="tab" aria-selected="false" title="The Matrix clock (X)"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.3"/><path d="M8 4.2V8l2.6 1.6"/></svg><span>Matrix</span></button>
+    <button class="tab nav-item" data-view="moon" role="tab" aria-selected="false" title="The Moon (M)"><svg id="moon-icon" viewBox="-8 -8 16 16" aria-hidden="true"><circle r="6.5" class="moon-dark"/></svg><span>Moon</span></button>
+    <div class="nav-spacer"></div>
+    <button class="nav-item nav-collapse" id="nav-collapse" title="Collapse the sidebar"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3.5L5.5 8l4.5 4.5"/></svg><span>Collapse</span></button>
+  </nav>
+
+<main id="instrument" class="workspace">
+
+<div id="view-field" class="view page" role="tabpanel">
+  <div class="kpi-strip countdowns" id="countdowns">
+    <div class="kpi"><span>EVENTS NOW</span><strong id="event-count">—</strong><small>all hazard streams</small></div>
+    <div class="kpi"><span>SEISMIC · 24 H</span><strong id="seismic-count">—</strong><small>USGS · M2.5 and above</small></div>
+    <div class="kpi"><span>CYCLONES ACTIVE</span><strong id="storm-count">—</strong><small><button type="button" class="link map-open">Open the globe →</button></small></div>
+    <div class="kpi-ticks" id="tick-row"></div>
+    <div class="kpi kpi-threshold count-card amber" id="card-launch">
+      <div class="count-top"><span id="launch-title">SINGULARITY COMPRESSION THRESHOLD</span><strong id="launch-pct" title="How far through the last two years of the approach">—</strong></div>
+      <div class="count-big threshold" id="launch-value">—</div>
+      <div class="track" role="progressbar" aria-label="Approach to the threshold" aria-valuemin="0" aria-valuemax="100"><span id="launch-bar"></span></div>
+    </div>
+    <div class="kpi count-card small music" id="card-music" hidden>
+      <div class="count-top"><span id="music-top">MUSIC</span><strong id="music-state">—</strong></div>
+      <div class="count-big" id="music-track">—</div>
+      <div class="music-sub" id="music-sub"></div>
+      <div class="track" role="progressbar" aria-label="Track position" aria-valuemin="0" aria-valuemax="100"><span id="music-bar"></span></div>
+      <div class="music-meta" id="music-meta"></div>
+    </div>
+  </div>
+
+  <div class="ov-grid">
+    <section class="panel ov-sun" aria-label="The Sun, corona">
+      <header class="panel-head"><h2>The Sun · corona</h2><span class="panel-meta" id="ov-sun-time">—</span><button type="button" class="btn ghost sm" data-goto="solar" data-sunlayer="a193">Solar →</button></header>
+      <div class="ov-sun-body">
+        <button type="button" class="ov-sun-disc" data-goto="solar" data-sunlayer="a193" title="Open the corona on the Solar page">
+          <img id="ov-sun-img" alt="The Sun's corona at 193 Å, from NASA's Solar Dynamics Observatory" decoding="async">
+          <svg id="ov-sun-over" viewBox="0 0 1024 1024" aria-hidden="true"></svg>
+          <span class="ov-sun-wait" id="ov-sun-wait">Loading the Sun…</span>
+        </button>
+      </div>
+    </section>
+    <section class="panel ov-globe" aria-label="Globe">
+      <header class="panel-head"><h2>Live events</h2><span class="panel-meta" id="ov-globe-sum"></span><button type="button" class="btn ghost sm map-open">Open globe</button></header>
+      <div class="globe-host" id="ov-globe"><div class="map-tip" id="ov-globe-tip" role="tooltip" hidden></div></div>
+    </section>
+    <section class="panel ov-events" aria-label="Event stream">
+      <header class="panel-head"><h2>Event stream</h2><span class="panel-meta">USGS · GDACS · EONET</span></header>
+      <ul id="stream" class="stream" aria-live="polite" aria-label="Live planetary events"><li class="stream-empty">Opening streams…</li></ul>
+    </section>
+    <section class="panel ov-conditions" aria-label="Space weather and orbit">
+      <header class="panel-head"><h2>Space weather · orbit</h2><button type="button" class="btn ghost sm" data-goto="solar">Solar →</button><button type="button" class="btn ghost sm" data-goto="orbital">Orbital →</button></header>
+      <div class="verdict" id="verdict">
+        <div class="verdict-say">
+          <strong id="verdict-state">Reading the field</strong>
+          <p id="verdict-plain">The space-weather streams have not answered yet.</p>
+        </div>
+        <div class="verdict-effects">
+          <div><span>AURORA</span><strong id="eff-aurora">—</strong><small id="eff-aurora-plain">—</small></div>
+          <div><span>RADIO &amp; GPS</span><strong id="eff-radio">—</strong><small id="eff-radio-plain">—</small></div>
+          <div><span>SATELLITES</span><strong id="eff-drag">—</strong><small id="eff-drag-plain">—</small></div>
+          <div><span>KESSLER</span><strong id="eff-kessler">—</strong><small id="eff-kessler-plain">Reading CelesTrak…</small></div>
+        </div>
+      </div>
+    </section>
+    <section class="panel ov-wire" aria-label="What became real">
+      <header class="panel-head"><h2>Space Launch</h2><button type="button" class="btn ghost sm" data-goto="discovery">Discovery →</button></header>
+      <ul id="wire" class="stream" aria-live="polite" aria-label="What became real"><li class="stream-empty">Opening the wire…</li></ul>
+    </section>
+  </div>
+</div>
+
+<div id="view-globe" class="view page" role="tabpanel" hidden>
+  <div class="work-bar"><div class="section-label">GLOBE · EVERY EVENT THAT CAME WITH A POSITION · REFINERIES · AI DATA CENTRES</div><span class="map-sum" id="map-sum"></span></div>
+  <div class="globe-body">
+    <div class="globe-frame">
+      <div class="globe-host" id="globe-host"></div>
+      <div class="map-tip" id="map-tip" role="tooltip" hidden></div>
+      <div class="map-zoom"><button type="button" id="map-zoom-in" aria-label="Zoom in" title="Zoom in (+)">+</button><button type="button" id="map-zoom-out" aria-label="Zoom out" title="Zoom out (−)">−</button><button type="button" id="map-reset" aria-label="Whole Earth" title="Whole Earth (0)"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.8"/><path d="M2.2 8h11.6M8 2.2c-2.4 2.8-2.4 8.8 0 11.6M8 2.2c2.4 2.8 2.4 8.8 0 11.6"/></svg></button></div>
+      <div class="map-foot"><span class="map-coord" id="map-coord">—</span><span class="map-scale" id="map-scale-label"></span></div>
+      <dl class="map-key">
+        <div><dt><i class="k-ok"></i><i class="k-warn"></i><i class="k-crit"></i></dt><dd>GDACS impact on people: minor · moderate · severe</dd></div>
+        <div><dt><b class="k-td"></b><b class="k-ts"></b><b class="k-hu"></b></dt><dd>Cyclone track: depression · storm · hurricane (dashed: forecast)</dd></div>
+        <div><dt><i class="k-cone"></i><i class="k-sw"></i></dt><dd>Forecast cone · winds ≥ 60 / 90 / 120 km/h</dd></div>
+        <div><dt><s class="k-sq crit"></s><s class="k-sq warn"></s><s class="k-sq ok"></s><s class="k-sq"></s><s class="k-sq hollow"></s></dt><dd>Refinery: offline · damaged · restored · running · closed</dd></div>
+        <div><dt><s class="k-dm"></s></dt><dd>AI data centre (Epoch AI), sized by power</dd></div>
+        <div><dt><s class="k-sq crit"></s><s class="k-sq warn"></s><s class="k-sq warn" style="opacity:.35"></s></dt><dd>Country energy: crisis · strained · watch (press reports, 72 h)</dd></div>
+        <div><dt><s class="k-hatch crit"></s><s class="k-hatch warn"></s><s class="k-hatch amber"></s></dt><dd>At war (hatched): major war · minor war · conflict</dd></div>
+      </dl>
+    </div>
+    <aside class="map-side">
+      <div class="chips map-layers" id="map-layers"></div>
+      <input id="map-search" class="control search map-search" type="search" placeholder="Find an event or a place  ( / )" aria-label="Find an event or a place" autocomplete="off" spellcheck="false">
+      <p class="map-note" id="map-note"></p>
+      <div class="map-detail" id="map-detail"></div>
+    </aside>
+  </div>
+</div>
+
+  <div id="view-seismic" class="view work" role="tabpanel" hidden>
+    <div class="work-bar">
+      <div class="section-label"><span>S</span> SEISMIC · USGS MAGNITUDE 2.5 AND ABOVE, PAST DAY</div>
+      <label class="control">Minimum
+        <select id="seismic-min"><option value="0">All the feed carries</option><option value="2.5">M 2.5</option><option value="3">M 3</option><option value="4">M 4</option><option value="5">M 5</option><option value="6">M 6</option></select>
+      </label>
+      <input id="seismic-query" class="control search" type="search" placeholder="Filter by place  ( / )" aria-label="Filter earthquakes by place">
+      <span class="work-count" id="seismic-shown">—</span>
+    </div>
+    <div class="work-body">
+      <div class="work-list"><table class="grid"><thead id="seismic-head"><tr><th></th><th data-sort="magnitude">Magnitude</th><th>Place</th><th>Depth</th><th data-sort="time" class="sorted">When</th></tr></thead><tbody id="seismic-rows"></tbody></table></div>
+      <aside class="work-detail" id="seismic-detail"><p class="detail-empty">Select a row to open it.</p></aside>
+    </div>
+  </div>
+
+  <div id="view-disasters" class="view work" role="tabpanel" hidden>
+    <div class="work-bar">
+      <div class="section-label"><span>D</span> DISASTERS · GDACS, NASA EONET AS SECONDARY</div>
+      <div class="chips" role="group" aria-label="Filter by kind">
+        <button class="chip" data-kind="TC">◎ CYCLONE</button><button class="chip" data-kind="FL">≈ FLOOD</button><button class="chip" data-kind="VO">▲ VOLCANO</button><button class="chip" data-kind="WF">✶ WILDFIRE</button><button class="chip" data-kind="DR">◌ DROUGHT</button>
+      </div>
+      <div class="chips" role="group" aria-label="Filter by alert level">
+        <button class="chip lvl-green" data-level="green">GREEN</button><button class="chip lvl-orange" data-level="orange">ORANGE</button><button class="chip lvl-red" data-level="red">RED</button>
+      </div>
+      <button type="button" class="chip map-open" title="Where they are">⌖ MAP</button>
+      <input id="disasters-query" class="control search" type="search" placeholder="Filter  ( / )" aria-label="Filter events">
+      <span class="work-count" id="disasters-count">—</span>
+    </div>
+    <div class="work-body">
+      <div class="work-list"><table class="grid"><thead id="disasters-head"><tr><th></th><th data-sort="severity">Severity</th><th>Event</th><th>Kind</th><th data-sort="time" class="sorted">When</th></tr></thead><tbody id="disasters-rows"></tbody></table></div>
+      <aside class="work-detail" id="disasters-detail"><p class="detail-empty">Select a row to open it.</p></aside>
+    </div>
+  </div>
+
+  <div id="view-vitals" class="view" role="tabpanel" hidden>
+    <div class="work-bar"><div class="section-label"><span>V</span> PLANETARY VITALS · THE STATE OF THE SYSTEM AND THE FLOWS BENEATH IT</div><span class="sources" id="vitals-sources">—</span></div>
+
+    <h3 class="band-title">FLOWS · COUNTING FROM THE MOMENT THIS PAGE OPENED</h3>
+    <div class="tick-grid" id="vitals-ticks"></div>
+
+    <h3 class="band-title">LEVELS · MEASURED, WITH THE DATE THEY WERE MEASURED</h3>
+    <div class="level-grid" id="vitals-levels"></div>
+
+    <p class="view-note">Every number here came from the source named beside it. The sparklines are the real series, not decoration. Where a source has gone stale or cannot be reached the page says so — a blank slot is a finding, not a gap to be filled.</p>
+  </div>
+
+  <div id="view-ai" class="view" role="tabpanel" hidden>
+    <div class="work-bar"><div class="section-label"><span>A</span> ARTIFICIAL INTELLIGENCE · WHAT IS RUNNING, WHAT IT CAN DO, WHAT IT HAS DONE</div><span class="sources" id="ai-sources">—</span></div>
+
+    <div class="ai-top">
+      <div class="ai-card">
+        <div class="n">AI COMPUTE · SINCE THIS PAGE OPENED</div>
+        <div class="v"><span id="vt-compute">0</span><span class="u" id="vt-compute-u">ZFLOP</span></div>
+        <div class="r" id="ai-compute-note">—</div>
+      </div>
+      <div class="ai-card" id="ai-watch">
+        <div class="n">CONTAINMENT WATCH · LAST 7 DAYS</div>
+        <div class="v">—</div>
+        <div class="r">Waiting for the reading…</div>
+      </div>
+      <div class="ai-card" id="ai-count">
+        <div class="n">INCIDENTS REPORTED · LAST 30 DAYS</div>
+        <div class="v">—</div>
+        <div class="r">AI Incident Database and the newsrooms</div>
+      </div>
+    </div>
+
+    <div class="ai-grid">
+      <div id="ai-lead"></div>
+      <div>
+        <div class="section-label" style="margin:16px 0 8px">CONTAINMENT ALERTS · FROM THE ALERT LOG</div>
+        <ol class="ai-alerts" id="ai-alerts"></ol>
+        <div class="section-label" style="margin:22px 0 8px">AI INCIDENTS · AS REPORTED</div>
+        <div class="work-list ai-list" id="ai-list-box"><table class="grid"><thead><tr><th></th><th>Incident report</th><th>Outlet</th><th>Reported</th></tr></thead><tbody id="ai-rows"></tbody></table></div>
+      </div>
+    </div>
+    <section class="panel ai-dc" id="ai-dc" aria-label="AI data centres"></section>
+    <p class="view-note">Installed compute is Epoch AI's count of chips in the ground; the time horizon is METR's measurement; incidents are the AI Incident Database's catalogue and newsroom reports. A report is flagged red when it describes a system acting outside its operators' control — the same test as the AI containment alert, whose rule is in Settings. Data centres are Epoch AI's Frontier Data Centers hub (CC BY): the largest sites only, not every data centre that serves AI.</p>
+  </div>
+
+  <div id="view-energy" class="view" role="tabpanel" hidden>
+    <div class="work-bar"><div class="section-label">ENERGY · YOUR COUNTRY AND EVERY COUNTRY · REFINERIES · OIL RESERVES</div><span class="sources" id="energy-sources">—</span></div>
+    <div class="cw-grid" id="watch-body"></div>
+    <div class="kpi-strip en-kpis" id="energy-kpis"></div>
+    <div class="en-grid" id="energy-body"></div>
+    <p class="view-note">Refineries: Wikipedia's List of oil refineries, placed with OpenStreetMap; the status of each comes from a hand-kept register, dated and linked to its source, and is only as current as its last report. Fresh reports are matched from GDELT and the World feeds by the refinery's name. Reserves: the EIA's Weekly Petroleum Status Report and SPR history; prices are front-month futures. The world's stocks are the IEA's monthly estimate.</p>
+  </div>
+
+  <div id="view-war" class="view" role="tabpanel" hidden>
+    <div class="work-bar"><div class="section-label"><span>R</span> WAR OBSERVATORY · EVERY ONGOING ARMED CONFLICT, AND WHAT IS HAPPENING IN EACH NOW</div><span class="sources" id="war-sources">—</span></div>
+    <div class="kpi-strip wr-kpis" id="war-kpis"></div>
+    <div id="war-body"></div>
+    <p class="view-note">Conflicts: Wikipedia's List of ongoing armed conflicts, in its four tiers by deaths in the current or previous year; the death tallies are its editors', sourced row by row, and lower bounds where a range is given. Reports: Wikipedia's curated Current events (armed conflicts and attacks), the foreign desks of Al Jazeera, BBC World and UN News, GDELT, and a news sweep in six languages; a report is filed under a conflict by the countries its headline names, so a headline that names none is left out. On the globe, hatched countries are where a listed conflict is fought: red major war, orange minor war, amber conflict; a country listed only as a neighbour, with nothing reported from it in a week, reads a tier lower.</p>
+  </div>
+
+  <div id="view-society" class="view" role="tabpanel" hidden>
+    <div class="work-bar"><div class="section-label"><span>S</span> SOCIETY · HOW MANY WE ARE, HOW WE LIVE, HOW WE VOTE, WHERE WE TAKE TO THE STREET</div><span class="sources" id="society-sources">—</span></div>
+    <div class="kpi-strip so-kpis" id="society-kpis"></div>
+    <div id="society-body"></div>
+    <p class="view-note">Population: World Bank World Development Indicators, whose population series are the UN World Population Prospects; the counts now are the latest mid-year estimate carried forward at the latest birth, death and growth rates, so they are estimates. Social indicators: the UN Statistics Division's global SDG database. Elections: Wikipedia's national electoral calendars. Protest and unrest: headlines from a news sweep in five languages, placed in the country they name; a level counts reports and distinct outlets in 48 hours and is a reading of coverage, not a measurement of events.</p>
+  </div>
+
+  <div id="view-economy" class="view" role="tabpanel" hidden>
+    <div class="work-bar"><div class="section-label"><span>C</span> ECONOMY · MARKETS, INTEREST RATES, CURRENCIES AND THE OUTLOOK FOR EVERY COUNTRY</div><span class="sources" id="economy-sources">—</span></div>
+    <div class="ec-markets" id="economy-markets"></div>
+    <div id="economy-body"></div>
+    <p class="view-note">Markets: Yahoo Finance, delayed as it publishes them. Policy rates: the Bank for International Settlements' central bank policy rate series (38 central banks; the euro area as one, applied to its members). Outlook: the IMF World Economic Outlook through its SDMX API; values for this year and next are IMF projections. Currencies: daily reference rates against the US dollar (fawazahmed0/currency-api); a negative change means the currency lost value against the dollar. Economic news: a sweep in five languages, each headline placed in the country it names; it measures coverage, not the economy.</p>
+  </div>
+
+  <div id="view-world" class="view work" role="tabpanel" hidden>
+    <div class="work-bar">
+      <div class="section-label"><span>W</span> WORLD · EVENTS THAT CROSSED A THRESHOLD · ARMED CONFLICT IS ON THE WAR PAGE</div>
+      <div class="chips" role="group" aria-label="Filter by confirmation">
+        <button class="chip" data-confirm="curated">CURATED ONLY</button>
+      </div>
+      <input id="world-query" class="control search" type="search" placeholder="Filter  ( / )" aria-label="Filter world events">
+      <span class="work-count" id="world-count">—</span>
+    </div>
+    <div class="work-body">
+      <div class="work-list"><table class="grid"><thead id="world-head"><tr><th></th><th>Source</th><th>Event</th><th>Kind</th><th data-sort="time" class="sorted">When</th></tr></thead><tbody id="world-rows"></tbody></table></div>
+      <aside class="work-detail" id="world-detail"><p class="detail-empty">Select a row to open it.</p></aside>
+    </div>
+  </div>
+
+  <div id="view-discovery" class="view work" role="tabpanel" hidden>
+    <div class="work-bar">
+      <div class="section-label"><span>D</span> DISCOVERY · WHAT WAS BUILT, AND WHAT WAS FOUND</div>
+      <div class="chips" role="group" aria-label="Filter by kind">
+        <button class="chip" data-dkind="LAUNCH">↑ LAUNCH</button><button class="chip" data-dkind="BUILT">◆ BUILT</button><button class="chip" data-dkind="FOUND">◇ FOUND</button><button class="chip" data-dkind="LEV">✚ LEV</button><button class="chip" data-dkind="PAPER">¶ PAPER</button><button class="chip" data-dkind="PREPRINT">§ PREPRINT</button>
+      </div>
+      <input id="discovery-query" class="control search" type="search" placeholder="Filter  ( / )" aria-label="Filter discovery">
+      <span class="work-count" id="discovery-count">—</span>
+    </div>
+    <button type="button" class="lev-latest" id="lev-latest" hidden>
+      <span class="lev-eyebrow">✚ LATEST LEV BREAKTHROUGH</span>
+      <strong id="lev-latest-title">—</strong>
+      <span class="lev-meta" id="lev-latest-meta"></span>
+    </button>
+    <div class="work-body">
+      <div class="work-list"><table class="grid"><thead id="discovery-head"><tr><th></th><th>Kind</th><th>Item</th><th>Source</th><th data-sort="time" class="sorted">When</th></tr></thead><tbody id="discovery-rows"></tbody></table></div>
+      <aside class="work-detail" id="discovery-detail"><p class="detail-empty">Select a row to open it.</p></aside>
+    </div>
+  </div>
+
+  <div id="view-solar" class="view" role="tabpanel" hidden>
+    <div class="work-bar"><div class="section-label"><span>F</span> SOLAR FIELD · NOAA SPACE WEATHER PREDICTION CENTER</div></div>
+    <div class="verdict big" id="s-verdict">
+      <div class="verdict-say">
+        <span class="eyebrow">RIGHT NOW</span>
+        <strong id="s-verdict-state">Reading the field</strong>
+        <p id="s-verdict-plain">The space-weather streams have not answered yet.</p>
+      </div>
+      <div class="verdict-effects">
+        <div><span>AURORA</span><strong id="s-eff-aurora">—</strong><small id="s-eff-aurora-plain">—</small></div>
+        <div><span>RADIO &amp; GPS</span><strong id="s-eff-radio">—</strong><small id="s-eff-radio-plain">—</small></div>
+        <div><span>SATELLITES · WILL THEY FALL</span><strong id="s-eff-drag">—</strong><small id="s-eff-drag-plain">—</small></div>
+      </div>
+    </div>
+    <div class="solar-grid">
+      <div class="solar-metric"><span>PLANETARY K INDEX</span><strong id="s-kp">—</strong><small id="s-kp-note">—</small></div>
+      <div class="solar-metric"><span>SOLAR WIND</span><strong id="s-wind">—</strong><small id="s-wind-note">—</small></div>
+      <div class="solar-metric"><span>X-RAY FLUX CLASS</span><strong id="s-xray">—</strong><small id="s-xray-note">—</small></div>
+      <div class="solar-metric"><span>SOLAR FLUX · F10.7</span><strong id="s-flux">—</strong><small id="s-flux-note">—</small></div>
+    </div>
+    <div class="chart-head"><span class="eyebrow">PLANETARY K INDEX · SEVEN DAYS AND THREE AHEAD</span><span class="eyebrow" id="kp-peak">—</span></div>
+    <div class="kp-wrap"><svg id="kp-chart" viewBox="0 0 900 150" preserveAspectRatio="none" role="img" aria-label="Planetary K index, seven days observed and three forecast"></svg><div class="kp-days" id="kp-days"></div></div>
+    <div class="chart-foot kp-foot"><span id="kp-range">—</span><span>the dashed line marks Kp 5, where a storm begins · the blue line is now</span></div>
+    <div class="kp-detail" id="kp-detail" hidden></div>
+    <div class="sun-grid">
+      <section class="panel sun-panel" aria-label="The Sun now">
+        <header class="panel-head"><h2>The Sun now</h2><span class="panel-meta">SDO · GOES · SOHO · NOAA active regions</span><button type="button" class="btn ghost sm" id="sun-full" data-sunfull title="Open the Sun full screen (Esc to close)">⤢ Full screen</button></header>
+        <div class="sun-body"><div id="sun-map" class="sun-map"></div><aside id="sun-side" class="sun-side"></aside></div>
+      </section>
+      <section class="panel fc-panel" aria-label="Forecast">
+        <header class="panel-head"><h2>Forecast</h2><span class="panel-meta">NOAA SWPC · L1 · WSA-Enlil</span></header>
+        <div id="sun-forecast" class="sun-forecast"></div>
+      </section>
+    </div>
+    <div class="glossary">
+      <h2>What the four numbers are</h2>
+      <div>
+        <p><b>Planetary K index</b> — how hard the Earth’s magnetic field is shaking, on a scale of 0 to 9. Under 3 is a normal day. 5 is where NOAA starts calling it a storm. 9 has happened a handful of times in living memory.</p>
+        <p><b>Solar wind</b> — the sun is always blowing a thin gas past us. 300 to 500 km/s is ordinary. Above 650 usually means a storm arrives within a day or so.</p>
+        <p><b>X-ray flux class</b> — what the sun is doing at this moment. The letter is a power of ten, so each step is ten times the last: A and B are the background hum, C is small, M is medium, X is large. Only M and X do anything we notice, and what they do is fade shortwave radio on the daylight side of the planet for a few minutes.</p>
+        <p><b>Solar flux, F10.7</b> — the background loudness of the sun’s eleven-year cycle, measured as radio brightness at 10.7 cm. It says what kind of year it is rather than what kind of day. It also sets how puffed-up the upper atmosphere is, which is what decides how much friction a low satellite feels.</p>
+      </div>
+      <p class="glossary-foot">Four readings of one field, published separately by NOAA and read separately here, so one failure does not blank the others.</p>
+    </div>
+  </div>
+
+  <div id="view-orbital" class="view work" role="tabpanel" hidden>
+    <div class="work-bar">
+      <div class="section-label"><span>O</span> ORBITAL · DEBRIS AND NEAR-EARTH APPROACHES</div>
+      <input id="orbital-query" class="control search" type="search" placeholder="Filter by name  ( / )" aria-label="Filter approaches">
+      <span class="work-count" id="orbital-count">—</span>
+    </div>
+    <section class="kessler" aria-labelledby="kw-title">
+      <div class="kessler-head"><span class="eyebrow" id="kw-title">KESSLER WATCH · THE DEBRIS CASCADE</span><span class="kw-status" id="kw-status">—</span></div>
+      <div class="kessler-body">
+        <div class="kw-pop">
+          <div class="kw-bar" id="kw-bar" role="img" aria-label="What is in orbit"></div>
+          <div class="kw-legend" id="kw-legend"></div>
+          <dl class="kw-stats" id="kw-stats"></dl>
+        </div>
+        <div class="kw-col"><div class="kw-sub" id="kw-passes-title">HIGH-SPEED PASSES AHEAD</div><ol class="kw-list" id="kw-passes"></ol></div>
+        <div class="kw-col"><div class="kw-sub">BREAKUPS DETECTED</div><ol class="kw-list" id="kw-breakups"></ol></div>
+      </div>
+      <p class="kw-note">CelesTrak: the US Space Force catalogue and SOCRATES Plus conjunction screening. A pass is listed at 1 km/s or more and a collision probability of 1 in 1,000 or more; satellites in formation drift past each other at no speed and are left out. <b>[+]</b> can manoeuvre; debris, dead satellites and unknowns cannot. Alerts: only a breakup — new debris catalogued between two readings. Predicted passes are shown here, never alerted.</p>
+    </section>
+    <div class="work-body">
+      <div class="work-list"><table class="grid"><thead id="orbital-head"><tr><th></th><th data-sort="distance">Miss distance</th><th>Body</th><th>Flag</th><th data-sort="time" class="sorted">Approach</th></tr></thead><tbody id="orbital-rows"></tbody></table></div>
+      <aside class="work-detail" id="orbital-detail"><p class="detail-empty">Select a row to open it.</p></aside>
+    </div>
+  </div>
+
+  <div id="view-matrix" class="view" role="tabpanel" aria-label="The Matrix clock" hidden>
+    <div class="work-bar">
+      <div class="section-label"><span>X</span> MATRIX · THE CLOCK, THE DAY'S DILATION AND WHERE THE COUNT STANDS</div>
+      <span class="panel-meta" id="ov-regime">—</span>
+    </div>
+    <div class="mx-body">
+      <section class="panel mx-clock" aria-label="Matrix clock">
+        <div class="clock-center">
+          <svg class="orbit" viewBox="0 0 600 600" aria-hidden="true"><circle class="orbit-face" cx="300" cy="300" r="289"/><circle class="orbit-outer" cx="300" cy="300" r="276"/><g id="ticks"></g><circle class="orbit-inner" cx="300" cy="300" r="247"/><circle id="phase-arc" cx="300" cy="300" r="260" pathLength="100"/><circle id="orbit-dot" r="5"/><g id="event-marks"></g><text x="300" y="15">00</text><text x="586" y="304">06</text><text x="300" y="596">12</text><text x="14" y="304">18</text></svg>
+          <div class="clock-face">
+            <div class="eyebrow">MATRIX TIME</div>
+            <div class="time" role="timer" aria-label="Matrix time"><span id="hours">00</span><span class="colon">:</span><span id="minutes">00</span><span class="seconds" id="seconds">00</span></div>
+            <div id="matrix-date" class="matrix-date">—</div>
+            <figure class="clock-wave">
+              <svg id="wave" viewBox="0 -34 300 142" role="img" aria-label="Daily dilation wave and current position"><rect class="wave-night" x="0" y="-34" width="50" height="142"/><path d="M0 42H300 M150 -34V108" class="guide"/><path id="wave-path" class="wave-line"/><circle id="wave-dot" r="4.5"/></svg>
+              <figcaption class="wave-labels"><span>00</span><span>12</span><span>24</span></figcaption>
+              <div class="wave-reading"><span>DILATION</span> <strong id="vector">—</strong></div>
+            </figure>
+          </div>
+        </div>
+      </section>
+      <aside class="panel mx-side" aria-label="Matrix readings">
+        <header class="panel-head"><h2>Readings</h2></header>
+        <dl class="mx-facts">
+          <div><dt>Matrix time</dt><dd id="mx-p-time">—</dd></div>
+          <div><dt>Matrix date</dt><dd id="mx-p-date">—</dd></div>
+          <div><dt>Regime</dt><dd id="mx-p-regime">—</dd></div>
+          <div><dt>Dilation now</dt><dd id="mx-p-v">—</dd></div>
+          <div><dt>Civil time</dt><dd id="mx-p-civil">—</dd></div>
+          <div><dt>Count</dt><dd id="mx-p-tau">—</dd></div>
+        </dl>
+        <p class="mx-note">The ring is the Matrix day: the arc and the dot show how far through it you are, and the dots on the ring are earthquakes of magnitude 5 and above from the last 24 hours, placed at the Matrix hour they struck. The wave is the day's dilation: above the line the clock races, below it repays.</p>
+      </aside>
+    </div>
+  </div>
+
+  <div id="view-moon" class="view" role="tabpanel" aria-label="The Moon" hidden>
+    <div class="work-bar">
+      <div class="section-label"><span>M</span> THE MOON · ITS CYCLE IN MATRIX TIME</div>
+    </div>
+    <div class="moon-panel">
+      <div class="moon-now">
+        <svg id="moon-disc" viewBox="-62 -62 124 124" role="img" aria-label="The Moon's phase"></svg>
+        <div class="moon-count">
+          <div class="mc"><span id="mc-label">TO THE NEXT FULL OR NEW MOON</span><strong id="mc-next">—</strong><small id="mc-next-note">—</small></div>
+          <p class="mc-unit">Matrix dates and hours · one date = 24 h 20 min 58.1 s</p>
+        </div>
+        <div class="moon-reading">
+          <span class="eyebrow" id="moon-eyebrow">THE MOON · NOW</span>
+          <strong id="moon-phase">—</strong>
+          <div class="moon-in" id="moon-in">—</div>
+          <dl class="moon-facts" id="moon-facts"></dl>
+          <button type="button" class="lun-back" id="lun-back" hidden>Back to now</button>
+        </div>
+      </div>
+      <div class="lunation">
+        <div class="lunation-head">
+          <button type="button" class="lun-step" id="lun-prev" aria-label="Previous lunation">‹</button>
+          <span class="eyebrow" id="lunation-title">LUNATION</span>
+          <button type="button" class="lun-step" id="lun-next" aria-label="Next lunation">›</button>
+        </div>
+        <div class="lunation-grid" id="lunation-grid"></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+  <footer class="statusbar">
+    <span id="sb-utc">UTC —</span><span id="sb-local">LOCAL —</span><span id="sb-matrix" title="Matrix time and date">MATRIX —</span><span id="sb-tau">—</span>
+    <span class="grow"></span>
+    <span id="sb-sources">—</span><span id="sb-version" title="Version (Semantic Versioning) · see CHANGELOG.md">SINGULARITY MONITOR</span>
+  </footer>
+</div>
+  <aside id="music-dock" class="music-dock" aria-label="The playlist" hidden>
+    <div class="music-dock-head"><span id="music-dock-title">THE PLAYLIST · NO SIGN-IN NEEDED</span><button type="button" id="music-dock-close" aria-label="Close the player">×</button></div>
+    <div id="music-remote" hidden>
+      <div class="remote-track" id="remote-track">—</div>
+      <div class="remote-artist" id="remote-artist"></div>
+      <div class="remote-bar" role="progressbar" aria-label="Track position" aria-valuemin="0" aria-valuemax="100"><span id="remote-fill"></span></div>
+      <div class="remote-times"><span id="remote-pos">0:00</span><span id="remote-dur">0:00</span></div>
+      <div class="remote-buttons">
+        <button type="button" id="remote-prev" aria-label="Previous track"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3h1.6v10H3zM13.5 3.3v9.4L6 8z"/></svg></button>
+        <button type="button" id="remote-play" aria-label="Play"><svg class="ico-play" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8z"/></svg><svg class="ico-pause" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 3h2.8v10H4zM9.2 3H12v10H9.2z"/></svg></button>
+        <button type="button" id="remote-next" aria-label="Next track"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M11.4 3H13v10h-1.6zM2.5 3.3v9.4L10 8z"/></svg></button>
+      </div>
+      <label class="remote-vol"><span>VOLUME</span><input type="range" id="remote-volume" min="0" max="100" step="1" disabled><b id="remote-volval">—</b></label>
+      <div class="remote-row"><label><input type="checkbox" id="remote-sync"> Keep to the clock</label><button type="button" class="rbtn" id="remote-start">Start playlist</button></div>
+      <div class="remote-foot"><span id="remote-device">—</span><button type="button" id="remote-settings">Settings</button></div>
+    </div>
+    <div id="music-dock-frame"></div>
+    <div class="music-dock-foot" id="music-dock-foot"><a id="music-dock-open" href="https://open.spotify.com/" target="_blank" rel="noopener">Open in Spotify</a><span id="music-dock-note"></span></div>
+    <button type="button" id="music-dock-connect" hidden>Connect Spotify for full tracks</button>
+  </aside>
+
+<dialog id="reader" class="reader" aria-labelledby="reader-title">
+  <div class="reader-head"><span class="eyebrow" id="reader-meta">—</span><button type="button" id="reader-close" aria-label="Close the reader">×</button></div>
+  <h2 id="reader-title">—</h2>
+  <p class="reader-byline" id="reader-byline"></p>
+  <div class="reader-body" id="reader-body"></div>
+  <div class="reader-foot"><span id="reader-count"></span><button type="button" id="reader-open">Open the original in your browser ↗</button></div>
+</dialog>
+<dialog id="alerts-log" class="alerts-log" aria-labelledby="alerts-title">
+  <div class="reader-head"><span class="eyebrow" id="alerts-title">ALERT LOG · LAST 30 DAYS</span><button type="button" id="alerts-close" aria-label="Close the alert log">×</button></div>
+  <p class="alerts-rules">Watching: <span id="alerts-rules">—</span></p>
+  <ol class="alerts-list" id="alerts-list"></ol>
+</dialog>
+<dialog id="settings"><form id="settings-form">
+  <div class="dialog-head"><span class="eyebrow">INSTRUMENT SETTINGS</span><button type="button" id="close-settings" aria-label="Close settings">×</button></div>
+  <h1>Settings</h1>
+  <label>Theme <span>Light or dark. System follows Windows.</span><select id="theme-select"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></label>
+  <label>Solar longitude <span>Degrees east; west is negative. Blank uses your timezone meridian.</span><input id="longitude" type="number" min="-180" max="180" step="any" placeholder="Automatic · timezone meridian"></label>
+  <label>Latitude <span>Degrees north; south is negative. Needed for moonrise, moonset and whether the Moon is up where you are.</span><input id="latitude" type="number" min="-90" max="90" step="any" placeholder="Not set"></label>
+  <div class="locate-row"><button type="button" id="locate-button">Use my location</button><span id="locate-status" role="status"></span></div>
+  <label>Home country <span>For the energy watch: a dedicated news watch in your country’s language, its outlook, and alerts. Automatic follows your latitude and longitude. Saved as you change it.</span><select id="home-country"></select></label>
+  <input id="brightness" type="range" min="35" max="100" value="100" hidden>
+  <label class="check"><input id="marks-toggle" type="checkbox" checked> Mark recent earthquakes on the Matrix clock ring</label>
+  <label class="check"><input id="streams-toggle" type="checkbox" checked> Read the live planetary streams</label>
+  <label>Windy webcams key <span>Optional. With a free key from api.windy.com/keys, the globe lists the public webcams near any point. It stays in this browser and is sent only to Windy.</span><input id="windy-key" type="text" maxlength="80" autocomplete="off" spellcheck="false" placeholder="Not set"><span class="topic-status" id="windy-key-status" role="status"></span></label>
+  <fieldset class="alert-settings" id="alert-settings">
+    <legend>Alerts <span>saved as you change them</span></legend>
+    <div class="alert-grid">
+      <label class="check"><input type="checkbox" data-alert="severe"> Severe disasters worldwide <span>M 6.5+, tsunami flag, GDACS red; orange for cyclone, flood, eruption, wildfire</span></label>
+      <label class="check"><input type="checkbox" data-alert="near"> Anything near me <span id="alert-near-note"></span></label>
+      <label class="radius">Radius <input id="alert-radius" type="number" min="10" max="5000" step="10"> km</label>
+      <label class="check"><input type="checkbox" data-alert="war"> War escalation <span>curated or newsroom reports only</span></label>
+      <label class="check"><input type="checkbox" data-alert="space"> Space weather <span>storm G3+, X-class flare</span></label>
+      <label class="check"><input type="checkbox" data-alert="ai"> AI escaping containment</label>
+      <label class="check"><input type="checkbox" data-alert="kessler"> Kessler watch <span>breakups only — new debris catalogued</span></label>
+      <label class="check"><input type="checkbox" data-alert="energy"> Energy crisis in my country <span>new reports of cuts, shortages or rationing (at most one alert in six hours), and a rise in its level</span></label>
+      <label class="check"><input type="checkbox" data-alert="energyWorld"> Energy crises worldwide <span>any country reaching crisis level, once a day</span></label>
+    </div>
+    <div class="alert-grid">
+      <label class="check"><input type="checkbox" data-alert="sound"> Sound <button type="button" id="alert-sound-test" class="mini">Play</button></label>
+      <label class="check"><input type="checkbox" data-alert="system"> System notification</label>
+    </div>
+    <label class="app-only">Phone (ntfy topic) <span>Install the free ntfy app, subscribe to a long private topic name, and enter the same name here. Anyone who knows the name can read it.</span>
+      <span class="topic-row"><input id="alert-topic" type="text" maxlength="64" placeholder="e.g. cohera-alerts-7fq2x9" autocomplete="off" spellcheck="false"><button type="button" id="alert-test" class="mini">Send a test</button></span>
+      <span class="topic-status" id="alert-topic-status" role="status"></span></label>
+  </fieldset>
+  <fieldset class="alert-settings music-settings" id="music-settings" hidden>
+    <legend>Music <span>Spotify, kept to the clock</span></legend>
+    <div class="music-row"><span id="music-status" role="status">Not connected.</span><button type="button" id="music-connect" class="mini">Connect Spotify</button></div>
+    <div class="alert-grid">
+      <label class="check"><input type="checkbox" id="music-sync" disabled> Keep the playlist to the clock <span>Starts the playlist now and when the countdown changes phase; the dilation wave sets the volume. It leaves anything else you do alone.</span></label>
+      <label class="check"><input type="checkbox" id="music-duck" checked> Duck the music for alerts <span>Red drops it to 12% for 90 seconds; orange to 25% for 30.</span></label>
+    </div>
+    <label class="music-pick">Playlist <span class="music-pickrow"><select id="music-playlist" disabled></select><button type="button" id="music-refresh" class="mini">Reload</button><button type="button" id="music-start" class="mini" disabled>Start now</button></span></label>
+    <label class="music-pick">Approach <span>until 20 March 2027</span><select id="music-phase-approach" disabled></select></label>
+    <label class="music-pick">Retention <span>launch until τ*, 15 March 2029</span><select id="music-phase-retention" disabled></select></label>
+    <label class="music-pick">Absorbed <span>after τ*</span><select id="music-phase-absorbed" disabled></select></label>
+    <label class="radius">Volume from <input id="music-vol-min" type="number" min="0" max="100" step="1"> % at the wave's low, to <input id="music-vol-max" type="number" min="0" max="100" step="1"> % at its crest</label>
+    <label class="music-client">Your own Spotify app <span>Optional. Leave it empty to use the app's own registration.</span>
+      <span class="topic-row"><input id="music-client" type="text" maxlength="32" placeholder="Client ID · 32 letters and digits" autocomplete="off" spellcheck="false"><button type="button" id="music-client-save" class="mini">Use</button></span>
+      <span class="topic-status" id="music-client-status" role="status"></span></label>
+    <p class="setting-note">Spotify keeps a new app to a short list of named accounts. If it says you are not registered for this app, make your own: developer.spotify.com/dashboard → Create app → set the Redirect URI to <b>http://127.0.0.1:8888/callback</b> → tick Web API → add your Spotify account under User Management → copy the Client ID here, then Connect.</p>
+  </fieldset>
+  <p class="setting-note">The website and the app share the March equinox start: 20 March 2027, 20:25 UT. The calendar runs backward and forward from that anchor. Before launch, the retained process waits at τ = 0 while the calendar and daily clock advance.</p>
+  <p class="setting-note">Live streams: USGS seismic, GDACS disaster alerts (NASA EONET as secondary), NOAA Space Weather Prediction Center, and NASA near-Earth approaches. The Moon is computed, not fetched. Each refreshes on its own schedule with no action from you.</p>
+  <p class="setting-note">Keys: <b>1</b>–<b>9</b> move between sections (Overview, Globe, Seismic, Hazards, Solar, Orbital, Vitals, AI, World) · <b>E</b> Energy · <b>R</b> War · <b>S</b> Society · <b>C</b> Economy · <b>D</b> Discovery · <b>X</b> Matrix · <b>M</b> opens the Moon · <b>A</b> opens the alert log · <b>T</b> switches the theme · <b>↑ ↓</b> or <b>j k</b> move the selection · <b>Enter</b> opens fullscreen · <b>/</b> jumps to the filter · <b>Esc</b> clears.</p>
+  <div class="dialog-actions"><span></span><button type="submit" class="primary">Save settings</button></div>
+  <p class="saved" id="save-status" role="status"></p>
+</form></dialog>
+<script src="engine.js"></script><script src="sky.js"></script><script src="net.js"></script><script src="storms.js"></script><script src="feeds.js"></script><script src="reading.js"></script><script src="vitals.js"></script><script src="wire.js"></script><script src="kessler.js"></script><script src="lib/energy-data.js"></script><script src="energy.js"></script><script src="lib/countries-data.js"></script><script src="watch.js"></script><script src="society.js"></script><script src="lib/war-data.js"></script><script src="war.js"></script><script src="lib/currency-data.js"></script><script src="economy.js"></script><script src="sun.js"></script>
+<script src="lib/d3-array.min.js"></script><script src="lib/d3-geo.min.js"></script><script src="lib/topojson-client.min.js"></script><script src="lib/atlas.js"></script>
+<script src="renderer.js"></script><script src="reader.js"></script><script src="alerts.js"></script><script src="globe.js"></script><script src="views.js"></script><script src="shell.js"></script><script src="spotify-sync.js"></script>
+</body></html>
