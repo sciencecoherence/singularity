@@ -80,7 +80,7 @@ const Energy = (() => {
       spr: { label: 'EIA SPR history', status: 'waiting', at: null, note: '' },
       prices: { label: 'Brent and WTI', status: 'waiting', at: null, note: '' },
       epoch: { label: 'Epoch AI data centres', status: 'waiting', at: null, note: '' },
-      news: { label: 'Refinery news (GDELT)', status: 'waiting', at: null, note: '' }
+      news: { label: 'Refinery news (GDELT, Google News)', status: 'waiting', at: null, note: '' }
     }
   };
   const ok = (key, note = '') => Object.assign(state.sources[key], { status: 'live', at: Date.now(), note });
@@ -259,21 +259,38 @@ const Energy = (() => {
     emit();
   }
 
-  /* ── Refinery news: GDELT, and the World page's own feeds ── */
+  /* ── Refinery news: GDELT, Google News, and the World page's own feeds ──
+     Both searches run; either is enough. GDELT refuses requests from shared
+     servers (the website's proxy among them), and Google News answers them,
+     so the website still has its refinery reports. */
   let gdelt = [];
+  const GN_Q = 'refinery (drone OR strike OR fire OR explosion OR attack OR halted OR outage OR shutdown) when:7d';
+  async function readGdelt() {
+    const d = await Net.json(`https://api.gdeltproject.org/api/v2/doc/doc?query=${encodeURIComponent(GDELT_Q)}&mode=artlist&maxrecords=60&format=json&timespan=7d&sort=datedesc`);
+    return (d.articles || []).map(a => {
+      const m = /^(\d{4})(\d\d)(\d\d)T(\d\d)(\d\d)(\d\d)Z$/.exec(a.seendate || '');
+      return { headline: String(a.title || '').trim(), link: a.url, time: m ? Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]) : null,
+               outlet: a.domain || a.sourcecountry || '', source: 'gdelt' };
+    });
+  }
+  async function readGoogle() {
+    const items = await Net.feed(`https://news.google.com/rss/search?q=${encodeURIComponent(GN_Q)}&hl=en-US&gl=US&ceid=US:en`);
+    return items.map(it => {
+      const i = it.title.lastIndexOf(' - ');
+      return { headline: (i > 20 ? it.title.slice(0, i) : it.title).trim(), link: it.link, time: it.time, outlet: i > 20 ? it.title.slice(i + 3).trim() : '', source: 'google' };
+    });
+  }
   async function readNews() {
-    try {
-      const d = await Net.json(`https://api.gdeltproject.org/api/v2/doc/doc?query=${encodeURIComponent(GDELT_Q)}&mode=artlist&maxrecords=60&format=json&timespan=7d&sort=datedesc`);
-      const items = (d.articles || []).map(a => {
-        const m = /^(\d{4})(\d\d)(\d\d)T(\d\d)(\d\d)(\d\d)Z$/.exec(a.seendate || '');
-        return { headline: String(a.title || '').trim(), link: a.url, time: m ? Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]) : null,
-                 outlet: a.domain || a.sourcecountry || '', source: 'gdelt' };
-      }).filter(i => i.time && i.headline);
+    const [g, n] = await Promise.allSettled([readGdelt(), readGoogle()]);
+    const items = [g, n].flatMap(r => r.status === 'fulfilled' ? r.value : []).filter(i => i.time && i.headline);
+    if (g.status === 'rejected' && n.status === 'rejected') fail('news', g.reason);
+    else {
       const keep = new Map(gdelt.filter(i => Date.now() - i.time < 10 * DAY).map(i => [i.link, i]));
-      for (const i of items) keep.set(i.link, i);
+      const seen = new Set([...keep.values()].map(i => i.headline.toLowerCase()));
+      for (const i of items) if (!seen.has(i.headline.toLowerCase())) { keep.set(i.link, i); seen.add(i.headline.toLowerCase()); }
       gdelt = [...keep.values()];
-      ok('news', `${gdelt.length} reports`);
-    } catch (error) { fail('news', error); }
+      ok('news', `${gdelt.length} reports · ${[g.status === 'fulfilled' && 'GDELT', n.status === 'fulfilled' && 'Google News'].filter(Boolean).join(' + ')}`);
+    }
     matchNews();
     emit();
   }
@@ -526,10 +543,10 @@ const Energy = (() => {
   }
   function newsPanel() {
     const items = state.news.slice(0, 14);
-    return `<div class="panel-head"><h2>Refinery reports</h2><span class="panel-meta">GDELT and the World feeds · 10 days</span></div>
+    return `<div class="panel-head"><h2>Refinery reports</h2><span class="panel-meta">GDELT, Google News and the World feeds · 10 days</span></div>
       <ol class="inc-list news en-news">${items.length ? items.map(n => `<li><time>${esc(ago(n.time))}</time><span><a href="${esc(n.link)}" target="_blank" rel="noreferrer noopener">${esc(n.headline)} ↗</a>
         ${n.refs && n.refs.length ? `<button type="button" class="en-link" data-ref="${esc(n.refs[0].id)}">▪ ${esc(n.refs[0].name)}</button>` : ''}</span></li>`).join('')
-        : `<li class="map-hint">${state.sources.news.status === 'error' ? 'GDELT did not answer (' + esc(state.sources.news.note) + '); the World feeds are still read.' : state.sources.news.status === 'waiting' ? 'The first GDELT reading comes a minute and a half after start.' : 'No refinery attack or outage reported in the last ten days.'}</li>`}</ol>`;
+        : `<li class="map-hint">${state.sources.news.status === 'error' ? 'GDELT and Google News did not answer (' + esc(state.sources.news.note) + '); the World feeds are still read.' : state.sources.news.status === 'waiting' ? 'The first GDELT reading comes a minute and a half after start.' : 'No refinery attack or outage reported in the last ten days.'}</li>`}</ol>`;
   }
   function paint() {
     const host = $('energy-body');

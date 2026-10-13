@@ -12,6 +12,12 @@ Versions follow [Semantic Versioning](https://semver.org): MAJOR.MINOR.PATCH.
   layer, a data source, an alert.
 - **PATCH** — a fix or an adjustment to what exists: layout, wording, a bug.
 
+## 2.12.1 · 2026-10-13
+- Fixed: Energy · refinery reports on the website. GDELT refuses requests
+  from shared servers such as Vercel's, so the panel stayed empty there. Google
+  News is now read alongside GDELT, in the app and on the website; the two are
+  merged, one row per story, and the panel works when either answers.
+
 ## 2.12.0 · 2026-10-13
 - Added: the web edition, built from this source and served on Vercel with
   one cached proxy function, `/api/feed`.
