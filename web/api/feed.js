@@ -21,7 +21,10 @@ const ALLOWED = new Set([
   'incidentdatabase.ai', 'reliefweb.int', 'www.aljazeera.com', 'feeds.bbci.co.uk', 'news.un.org',
   'celestrak.org', 'lifespan.io', 'ir.eia.gov', 'www.eia.gov', 'query1.finance.yahoo.com',
   'nominatim.openstreetmap.org', 'news.google.com', 'www.nhc.noaa.gov', 'www.metoc.navy.mil',
-  'unstats.un.org', 'stats.bis.org', 'api.imf.org', 'cdn.jsdelivr.net', 'api.nasa.gov'
+  'unstats.un.org', 'stats.bis.org', 'api.imf.org', 'cdn.jsdelivr.net', 'api.nasa.gov',
+  // Launch Library: read directly by browsers, and through here only when it
+  // refuses one (fifteen requests an hour per address; see net.js).
+  'll.thespacedevs.com'
 ]);
 
 // Seconds the CDN keeps an answer, and how long after that it may still serve
@@ -34,7 +37,7 @@ const CACHE = {
   'api.imf.org': [21600, 86400], 'stats.bis.org': [21600, 86400], 'unstats.un.org': [21600, 86400],
   'cdn.jsdelivr.net': [3600, 21600], 'www.eia.gov': [3600, 21600], 'ir.eia.gov': [3600, 21600],
   'www.nhc.noaa.gov': [600, 1800], 'www.metoc.navy.mil': [600, 1800],
-  'api.gdeltproject.org': [900, 3600], 'api.nasa.gov': [10800, 21600], 'nominatim.openstreetmap.org': [86400, 604800]
+  'api.gdeltproject.org': [900, 3600], 'll.thespacedevs.com': [1200, 3600], 'api.nasa.gov': [10800, 21600], 'nominatim.openstreetmap.org': [86400, 604800]
 };
 const DEFAULT_CACHE = [900, 3600];
 

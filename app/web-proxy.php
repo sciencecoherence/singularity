@@ -47,6 +47,8 @@ const ALLOWED = [
     'api.imf.org',
     'cdn.jsdelivr.net',
     'api.nasa.gov',
+    // Launch Library, only when it refuses a visitor's direct read (net.js).
+    'll.thespacedevs.com',
 ];
 
 // CelesTrak recomputes twice a day and asks clients not to download the same

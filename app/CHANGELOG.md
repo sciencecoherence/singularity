@@ -12,6 +12,14 @@ Versions follow [Semantic Versioning](https://semver.org): MAJOR.MINOR.PATCH.
   layer, a data source, an alert.
 - **PATCH** — a fix or an adjustment to what exists: layout, wording, a bug.
 
+## 2.13.3 · 2026-10-13
+- Fixed: rocket launches missing on the website when the desktop app runs on
+  the same connection. Launch Library allows fifteen requests an hour per
+  address, and the app and the website were sharing them; the website got
+  "429 Too Many Requests" and showed no launches. When Launch Library refuses
+  a visitor's direct read, the website now reads it through `/api/feed`,
+  cached twenty minutes for every visitor.
+
 ## 2.13.2 · 2026-10-13
 - Fixed: Vercel Web Analytics on the website counts visits. The analytics
   pull requests added only the queue (`analytics.js`), and nothing loaded

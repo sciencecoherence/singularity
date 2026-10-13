@@ -86,10 +86,25 @@ const Net = (() => {
     return { url: `${PROXY}?url=${encodeURIComponent(url)}${tail ? '&tail=' + tail : ''}${head ? '&head=' + head : ''}`, direct: false };
   }
 
+  /* Hosts read directly that ration requests per address. Launch Library
+     allows fifteen an hour; a visitor whose desktop app is running on the
+     same connection shares that allowance, and the website then got 429 and
+     showed no launches. When such a host refuses a direct read, the proxy
+     reads it instead — one cached request serving every visitor. */
+  const PROXY_ON_REFUSAL = new Set(['ll.thespacedevs.com']);
+
   /* One fetch, with the two ways a missing proxy shows itself folded in. */
   async function grab(url, tail, head) {
     const r = route(url, tail, head);
-    const response = await fetch(r.url, { cache: 'no-store' });
+    const fallback = r.direct && proxyState !== 'absent' && PROXY_ON_REFUSAL.has(new URL(url).hostname);
+    // A refusal may come without the cross-origin header, which the browser
+    // reports as a network error rather than a 429.
+    let response = await fetch(r.url, { cache: 'no-store' }).catch(e => { if (fallback) return null; throw e; });
+    if (fallback && (!response || response.status === 429)) {
+      const via = await fetch(`${PROXY}?url=${encodeURIComponent(url)}`, { cache: 'no-store' }).catch(() => null);
+      if (via && via.ok) response = via;
+      else if (!response) throw new Error(via ? 'HTTP ' + via.status : 'refused');
+    }
     if (!r.direct && response.status === 404) { proxyState = 'absent'; throw new Error(NEEDS_PROXY); }
     if (!response.ok) throw new Error('HTTP ' + response.status);
     const body = await response.text();
