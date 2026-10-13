@@ -12,6 +12,12 @@ Versions follow [Semantic Versioning](https://semver.org): MAJOR.MINOR.PATCH.
   layer, a data source, an alert.
 - **PATCH** — a fix or an adjustment to what exists: layout, wording, a bug.
 
+## 2.13.4 · 2026-10-13
+- Fixed: the shared record finds its Upstash database under any name. Vercel
+  prefixes the variables with the database's name (MEMORY_KEY_KV_REST_API_URL
+  for a database called MEMORY_KEY); `/api/memory` looked only for the
+  unprefixed ones.
+
 ## 2.13.3 · 2026-10-13
 - Fixed: rocket launches missing on the website when the desktop app runs on
   the same connection. Launch Library allows fifteen requests an hour per

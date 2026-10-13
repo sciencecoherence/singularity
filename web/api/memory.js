@@ -12,7 +12,8 @@
          key nothing can be written.
 
    Storage: Upstash Redis through its REST API (the Vercel Marketplace
-   integration sets KV_REST_API_URL and KV_REST_API_TOKEN). Locally,
+   integration sets KV_REST_API_URL and KV_REST_API_TOKEN, prefixed with the
+   database's name when it has one). Locally,
    scripts/dev.mjs points SM_MEMORY_FILE at a JSON file instead.            */
 
 import { createRequire } from 'node:module';
@@ -28,8 +29,21 @@ const MAX_BODY = 2_000_000;
 const UA = 'SingularityMonitor/1.0 (web edition)';
 
 /* ── Storage ── */
-const REDIS_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-const REDIS_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+// The Marketplace names the variables after the database, with a prefix when
+// the database has a name (a database called MEMORY_KEY gives
+// MEMORY_KEY_KV_REST_API_URL), so any prefix is accepted; the read-only token
+// is never used, since the record is written to.
+function upstash() {
+  const env = process.env;
+  for (const [name, url] of Object.entries(env)) {
+    const m = name.match(/^(.*)(KV_REST_API_URL|UPSTASH_REDIS_REST_URL)$/);
+    if (!m || !url) continue;
+    const token = env[m[1] + m[2].replace('URL', 'TOKEN')];
+    if (token) return { url, token };
+  }
+  return { url: '', token: '' };
+}
+const { url: REDIS_URL, token: REDIS_TOKEN } = upstash();
 const FILE = process.env.SM_MEMORY_FILE;
 const configured = () => !!((REDIS_URL && REDIS_TOKEN) || FILE);
 
