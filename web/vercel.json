@@ -8,6 +8,10 @@
   "functions": {
     "api/feed.js": {
       "maxDuration": 30
+    },
+    "api/memory.js": {
+      "maxDuration": 30,
+      "includeFiles": "api/_lib/**"
     }
   },
   "headers": [

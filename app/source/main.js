@@ -131,6 +131,23 @@ function fetchFeed(url,asText,head=0){
 }
 ipcMain.handle('matrix:feed',(e,url)=>trusted(e)?fetchFeed(String(url),false):{error:'untrusted sender'});
 ipcMain.handle('matrix:feed-text',(e,url,head)=>trusted(e)?fetchFeed(String(url),true,head):{error:'untrusted sender'});
+// The website's shared record of AI incidents (web/api/memory.js). The page
+// can reach this one address only. With the key from Settings the app adds
+// what it has read; without it, it reads the record.
+const MEMORY_URL=process.env.SM_MEMORY_URL||'https://singularity-web-chi.vercel.app/api/memory';
+ipcMain.handle('matrix:memory',async(e,items,key)=>{
+  if(!trusted(e))return{error:'untrusted sender'};
+  try{
+    const post=Array.isArray(items)&&typeof key==='string'&&key.length>0;
+    const res=await net.fetch(MEMORY_URL,post
+      ?{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({incidents:items.slice(0,500)})}
+      :{method:'GET',headers:{'Accept':'application/json'}});
+    const text=await res.text();
+    let data=null;try{data=JSON.parse(text);}catch{/* not JSON */}
+    if(!res.ok)return{error:(data&&data.error)||('HTTP '+res.status)};
+    return{data};
+  }catch(err){return{error:String((err&&err.message)||err).slice(0,80)};}
+});
 
 /* ── Alerts ────────────────────────────────────────────────────────────────
    The page decides what is an alert (alerts.js). Here it is delivered, once

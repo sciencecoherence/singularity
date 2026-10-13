@@ -471,6 +471,7 @@
   <label class="check"><input id="marks-toggle" type="checkbox" checked> Mark recent earthquakes on the Matrix clock ring</label>
   <label class="check"><input id="streams-toggle" type="checkbox" checked> Read the live planetary streams</label>
   <label>Windy webcams key <span>Optional. With a free key from api.windy.com/keys, the globe lists the public webcams near any point. It stays in this browser and is sent only to Windy.</span><input id="windy-key" type="text" maxlength="80" autocomplete="off" spellcheck="false" placeholder="Not set"><span class="topic-status" id="windy-key-status" role="status"></span></label>
+  <label id="memory-key-row">Shared record key <span>Optional. With the key set on the website's server (MEMORY_KEY), this app adds the AI incidents it reads to the website's shared record, so the site keeps what passed through a feed while no one had it open. Without it the app still reads the record. It stays on this computer and is sent only to the website.</span><input id="memory-key" type="password" maxlength="200" autocomplete="off" spellcheck="false" placeholder="Not set"><span class="topic-status" id="memory-key-status" role="status"></span></label>
   <fieldset class="alert-settings" id="alert-settings">
     <legend>Alerts <span>saved as you change them</span></legend>
     <div class="alert-grid">
@@ -515,7 +516,7 @@
   <div class="dialog-actions"><span></span><button type="submit" class="primary">Save settings</button></div>
   <p class="saved" id="save-status" role="status"></p>
 </form></dialog>
-<script src="engine.js"></script><script src="sky.js"></script><script src="net.js"></script><script src="storms.js"></script><script src="feeds.js"></script><script src="reading.js"></script><script src="vitals.js"></script><script src="wire.js"></script><script src="kessler.js"></script><script src="lib/energy-data.js"></script><script src="energy.js"></script><script src="lib/countries-data.js"></script><script src="watch.js"></script><script src="society.js"></script><script src="lib/war-data.js"></script><script src="war.js"></script><script src="lib/currency-data.js"></script><script src="economy.js"></script><script src="sun.js"></script>
+<script src="engine.js"></script><script src="sky.js"></script><script src="net.js"></script><script src="storms.js"></script><script src="feeds.js"></script><script src="reading.js"></script><script src="vitals.js"></script><script src="lib/incidents.js"></script><script src="wire.js"></script><script src="kessler.js"></script><script src="lib/energy-data.js"></script><script src="energy.js"></script><script src="lib/countries-data.js"></script><script src="watch.js"></script><script src="society.js"></script><script src="lib/war-data.js"></script><script src="war.js"></script><script src="lib/currency-data.js"></script><script src="economy.js"></script><script src="sun.js"></script>
 <script src="lib/d3-array.min.js"></script><script src="lib/d3-geo.min.js"></script><script src="lib/topojson-client.min.js"></script><script src="lib/atlas.js"></script>
 <script src="renderer.js"></script><script src="reader.js"></script><script src="alerts.js"></script><script src="globe.js"></script><script src="views.js"></script><script src="shell.js"></script><script src="spotify-sync.js"></script>
 </body></html>

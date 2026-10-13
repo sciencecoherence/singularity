@@ -13,3 +13,6 @@ app/archive/
 
 # The website is built from app/source at deploy time (web/scripts/sync.mjs)
 web/public/
+
+# The local stand-in for the shared record (web/scripts/dev.mjs)
+web/.memory.json

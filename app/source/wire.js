@@ -55,7 +55,7 @@ const Wire = (() => {
       .filter(e => Math.abs(now - e.time) < 120 * 24 * HOUR)
       .sort((a, b) => b.time - a.time);
     if (list === 'world') state[list] = oneStoryEach(state[list]);
-    state[list] = state[list].slice(0, 220);
+    state[list] = state[list].slice(0, list === 'incidents' ? Incidents.MAX : 220);
   }
 
   /* One story, one row. GDELT indexes every syndicated copy of an article —
@@ -286,7 +286,9 @@ const Wire = (() => {
     { key: 'bbc',       outlet: 'BBC News',   url: 'https://feeds.bbci.co.uk/news/world/rss.xml', all: false },
     { key: 'unnews',    outlet: 'UN News',    url: 'https://news.un.org/feed/subscribe/en/news/topic/peace-and-security/feed/rss.xml', all: true }
   ];
-  const AI_ESCAPE = /(self[- ]?exfiltrat\w*|exfiltrat\w* (?:its|their) (?:own )?weights|escap\w* (?:its |the |their )?(?:sandbox|containment|confinement|lab)|self[- ]?replicat\w*|autonomous(?:ly)? replicat\w*|copied (?:itself|its (?:own )?weights)|loss of control (?:of|over) (?:an? )?ai|(?:evad|resist|sabotag)\w* (?:its )?shut ?down|disabl\w* (?:its )?oversight)/i;
+  // What makes a report a containment report: lib/incidents.js, shared with
+  // the website's server so both apply the same test.
+  const AI_ESCAPE = Incidents.AI_ESCAPE;
   async function readNewsrooms() {
     const reads = await Promise.allSettled(NEWSROOMS.map(n => Net.feed(n.url)));
     if (reads.every(r => r.status === 'rejected')) throw reads[0].reason;
@@ -294,12 +296,10 @@ const Wire = (() => {
     reads.forEach((r, i) => {
       if (r.status !== 'fulfilled') return;
       const n = NEWSROOMS[i];
+      ai.push(...Incidents.fromNewsroom(r.value, n.outlet));
       for (const it of r.value) {
         if (!it.time || !it.link) continue;
         const headline = strip(it.title), summary = strip(it.summary);
-        if (AI_ESCAPE.test(headline + ' ' + summary))
-          ai.push({ id: 'nr:' + it.link, source: 'newsroom', kind: 'INCIDENT', headline, detail: summary.slice(0, 190),
-                    place: n.outlet, link: it.link, time: it.time, level: 'amber', escape: true });
         if (!n.all && !CONFLICT.test(headline + ' ' + summary.slice(0, 160))) continue;
         war.push({ id: 'nr:' + it.link, source: 'newsroom', kind: 'WORLD', headline, detail: summary.slice(0, 220),
                    place: n.outlet, confirmed: false, tier: 'reported', topic: 'CONFLICT',
@@ -511,19 +511,66 @@ const Wire = (() => {
      wrong, and unlike a risk index it is a list of things that happened.
      Its feed carries stub entries with no title or link; those are dropped. */
   async function readIncidents() {
-    const items = await Net.feed('https://incidentdatabase.ai/rss.xml');
-    const mapped = items.filter(i => i.time && i.link && !/^no title$/i.test(i.title))
-      .map((i, n) => {
-        let outlet = 'AIID';
-        try { outlet = new URL(i.link).hostname.replace(/^www\./, ''); } catch { /* keep AIID */ }
-        return {
-          id: 'aiid:' + (i.link || n), source: 'aiid', kind: 'INCIDENT',
-          headline: strip(i.title), detail: strip(i.summary).slice(0, 190),
-          place: outlet, link: i.link, time: i.time, level: 'amber',
-          escape: AI_ESCAPE.test(i.title + ' ' + i.summary)
-        };
+    accumulate('incidents', 'aiid', Incidents.fromAiid(await Net.feed(Incidents.AIID_URL)), Incidents.KEEP_MS);
+  }
+
+  /* ── The shared memory ────────────────────────────────────────────────
+     A feed holds only its newest items: Al Jazeera's last 25 stories cover
+     about four hours. A reader that was not running in those hours never sees
+     what passed through, so each copy of the instrument used to know only
+     what it had itself been open for. The website keeps one record of AI
+     incidents on its server (web/api/memory.js): the server reads the same
+     feeds whenever the site is visited, and the desktop app, given the key in
+     Settings, adds everything it has read. Every copy reads that record and
+     merges it into its own. Without the key the desktop app still reads it. */
+  const MEMORY_KEY = 'temporal-live:memory-key';
+  const memoryMeta = typeof document !== 'undefined' && document.querySelector('meta[name="sm-memory"]');
+  const hasMemory = !!((typeof window !== 'undefined' && window.desktop) || memoryMeta);
+  async function readShared() {
+    let data;
+    if (window.desktop) {
+      if (!window.desktop.memory) throw new Error(Net.STALE_RUNTIME);
+      let key = '';
+      try { key = localStorage.getItem(MEMORY_KEY) || ''; } catch { /* no key */ }
+      const own = key ? state.incidents.filter(e => e.source === 'aiid' || e.source === 'newsroom') : null;
+      const r = await window.desktop.memory(own, key);
+      if (r.error) throw new Error(r.error);
+      data = r.data;
+    } else {
+      if (Net.paused) throw new Error(Net.PAUSED_ERR);
+      const res = await fetch(memoryMeta.content);
+      if (!res.ok) {
+        let why = 'HTTP ' + res.status;
+        try { why = (await res.json()).error || why; } catch { /* keep the status */ }
+        throw new Error(why);
+      }
+      data = await res.json();
+    }
+    const list = (data && Array.isArray(data.incidents) ? data.incidents : []).map(e => Incidents.clean(e)).filter(Boolean);
+    accumulate('incidents', 'shared', list, Incidents.KEEP_MS);
+  }
+  // The key field in Settings (desktop only: the website only reads).
+  function wireKeyField() {
+    const input = document.getElementById('memory-key'), row = document.getElementById('memory-key-row');
+    if (!input || !row) return;
+    if (!window.desktop) { row.hidden = true; return; }
+    try { input.value = localStorage.getItem(MEMORY_KEY) || ''; } catch { /* none */ }
+    input.addEventListener('change', () => {
+      const v = input.value.trim();
+      try { v ? localStorage.setItem(MEMORY_KEY, v) : localStorage.removeItem(MEMORY_KEY); } catch { /* storage refused */ }
+      const st = document.getElementById('memory-key-status');
+      if (st) st.textContent = v ? 'Saved. Sending what this app has read…' : 'Removed. The app still reads the shared record.';
+      const s = STREAMS.find(x => x.key === 'shared');
+      if (s) run(s).then(() => {
+        const h = state.sources.shared;
+        if (st && v) st.textContent = h.status === 'live' && h.at > Date.now() - 60000
+          ? 'Saved. This app’s incidents are in the shared record.' : `Saved, but the record answered: ${h.note || 'no answer'}`;
       });
-    accumulate('incidents', 'aiid', mapped, 60 * 24 * HOUR);
+    });
+  }
+  if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wireKeyField);
+    else wireKeyField();
   }
 
   /* ── Scheduler ─────────────────────────────────────────────────────── */
@@ -540,7 +587,8 @@ const Wire = (() => {
     { key: 'papers',    label: 'PEER-REVIEWED', every: 120 * MIN, read: readPapers },
     { key: 'lev-papers', label: 'LEV · PAPERS', every: 60 * MIN, read: readLevPapers },
     { key: 'lev-news',  label: 'LEV · NEWS', every: 60 * MIN, read: readLevNews },
-    { key: 'aiid',      label: 'AI INCIDENTS', every: 60 * MIN, read: readIncidents }
+    { key: 'aiid',      label: 'AI INCIDENTS', every: 60 * MIN, read: readIncidents },
+    ...(hasMemory ? [{ key: 'shared', label: 'SHARED RECORD', every: 10 * MIN, read: readShared }] : [])
   ];
   for (const s of STREAMS) state.sources[s.key] = { label: s.label, status: 'waiting', at: null, failures: 0, note: '' };
 

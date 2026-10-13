@@ -5,13 +5,15 @@ Windows, and the same pages as a website.
 
 ```
 app/    the desktop app (Electron): source/, Build Runtime.cmd, CHANGELOG.md, READ ME.md
-web/    the website (Vercel): api/feed.js, vercel.json, scripts/
+web/    the website (Vercel): api/feed.js, api/memory.js, vercel.json, scripts/
 ```
 
 There is one implementation. `app/source` holds every page and stream; the
 website is built from it at each deploy (`web/scripts/sync.mjs`), leaving out
-the Electron-only files and adding one server function, `web/api/feed.js`, for
-the sources a browser cannot read directly. A change to the app reaches the
+the Electron-only files and adding two server functions: `web/api/feed.js`
+for the sources a browser cannot read directly, and `web/api/memory.js`, the
+shared record of AI incidents that the website and the app both read and add
+to. A change to the app reaches the
 website on the next push.
 
 ## The desktop app

@@ -12,6 +12,23 @@ Versions follow [Semantic Versioning](https://semver.org): MAJOR.MINOR.PATCH.
   layer, a data source, an alert.
 - **PATCH** — a fix or an adjustment to what exists: layout, wording, a bug.
 
+## 2.13.0 · 2026-10-13
+- Added: a shared record of AI incidents, kept by the website
+  (`web/api/memory.js`). A feed holds only its newest stories — Al Jazeera's
+  last 25 cover about four hours — so each copy of the monitor knew only what
+  passed while it was open: the app, running for weeks, had a containment
+  report and 158 incidents that a website opened today could not see. The
+  record keeps 60 days. The website's server reads the AI Incident Database
+  and the newsrooms on every visit (at most once a quarter hour), and the app,
+  given the key in Settings → Shared record key, sends everything it has read.
+  Every copy reads the record every ten minutes and merges it into its own.
+- Changed: what makes a report an AI incident or a containment report now
+  lives in one file, `lib/incidents.js`, read by the page and by the server.
+- Changed: the AI page's containment alerts give the time the report came
+  out, not the moment this copy happened to log it.
+- Changed: up to 400 AI incidents are kept (was 220, shared with the other
+  lists).
+
 ## 2.12.1 · 2026-10-13
 - Fixed: Energy · refinery reports on the website. GDELT refuses requests
   from shared servers such as Vercel's, so the panel stayed empty there. Google

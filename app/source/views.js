@@ -482,7 +482,7 @@ const Views = (() => {
     if (alerts) {
       const log = typeof Alerts !== 'undefined' ? (Alerts.log || []).filter(a => a.rule === 'ai') : [];
       alerts.innerHTML = log.length
-        ? log.slice(0, 8).map(a => `<li class="lvl-red"><span>${ago(a.fired)}</span>${a.link
+        ? log.slice(0, 8).map(a => `<li class="lvl-red"><span>${ago(a.time || a.fired)}</span>${a.link
             ? `<a href="${esc(a.link)}" target="_blank" rel="noreferrer noopener">${esc(a.title)}</a>` : esc(a.title)}</li>`).join('')
         : `<li class="empty">None in the last 30 days.${ruleOn ? '' : ' The AI containment rule is switched off in Settings.'}</li>`;
     }
